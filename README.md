@@ -113,6 +113,31 @@ ALPHA_VANTAGE_API_KEY=""
 
 ---
 
+## Containerized Deployment (Docker & Compose)
+
+Vestly includes a multi-stage Alpine Dockerfile and Docker Compose orchestration setup:
+
+```bash
+# Build and run with Docker Compose (includes persistent database & upload volumes)
+docker compose up -d
+
+# Check container health and status
+docker compose ps
+docker compose logs -f
+
+# Run standalone container
+docker build -t vestly:latest .
+docker run -p 3000:3000 --env-file .env vestly:latest
+```
+
+The container includes:
+- Automated health monitoring (`/api/health`)
+- Non-root user execution (`nextjs:nodejs`)
+- Automatic database push and seed initialization on first launch
+- Persistent volume mappings for SQLite database and uploaded grant agreements
+
+---
+
 ## Compliance & Legal Disclaimer
 
 Vestly provides mathematical estimates for educational and scenario planning purposes only. It does not provide financial, investment, legal, or tax advice. Equity compensation taxation is complex and depends on household income, deductions, state residence, and AMT phaseouts. Always consult a licensed CPA or tax attorney before exercising options or making financial commitments.

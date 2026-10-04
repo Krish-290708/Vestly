@@ -1,0 +1,17 @@
+Dockerfile
+.dockerignore
+node_modules
+.next
+.git
+.gitignore
+.env
+.env.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev.db
+dev.db-journal
+tests
+README.md
+Vestly.py
