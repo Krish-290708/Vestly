@@ -39,27 +39,93 @@ export default function ReportsPage() {
     window.print();
   };
 
+  const handleExportCSV = () => {
+    if (!grants.length) return;
+    
+    const headers = [
+      'Grant ID',
+      'Employer / Company',
+      'Grant Type',
+      'Units Granted',
+      'Strike Price ($)',
+      'Latest FMV / 409A ($)',
+      'Total Value (@ FMV)',
+      'Vested Units',
+      'Vested Value ($)',
+      'Vested Exercise Cost ($)',
+      'Status',
+      'Grant Date',
+      'Vesting Start Date',
+      'Cliff Months',
+      'Expiration Date',
+    ];
+
+    const rows = grants.map((g) => [
+      `"${g.id}"`,
+      `"${g.company?.name || 'Unknown'}"`,
+      `"${g.grantType}"`,
+      g.unitsGranted,
+      g.strikePrice || 0,
+      g.latestFmvPerShare || 0,
+      ((g.unitsGranted || 0) * (g.latestFmvPerShare || 0)).toFixed(2),
+      g.vestedUnits || 0,
+      (g.vestedValue || 0).toFixed(2),
+      (g.vestedExerciseCost || 0).toFixed(2),
+      `"${g.status}"`,
+      `"${g.grantDate ? new Date(g.grantDate).toLocaleDateString() : ''}"`,
+      `"${g.vestingStartDate ? new Date(g.vestingStartDate).toLocaleDateString() : ''}"`,
+      g.cliffMonths || 0,
+      `"${g.expirationDate ? new Date(g.expirationDate).toLocaleDateString() : ''}"`,
+    ]);
+
+    const csvContent = [
+      `# Vestly Equity Statement - ${user?.name || 'Client'} (${new Date().toLocaleDateString()})`,
+      headers.join(','),
+      ...rows.map(r => r.join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Vestly_Equity_Report_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Top Action Bar (hidden when printing) */}
-      <div className="flex items-center justify-between no-print">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <FileText className="w-6 h-6 text-emerald-600" />
+          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+            <FileText className="w-6 h-6 text-emerald-400" />
             CPA & Financial Advisor Summary Report
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             Clean, printable audit document prepared for tax preparation and wealth planning
           </p>
         </div>
 
-        <button
-          onClick={handlePrint}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-colors"
-        >
-          <Printer className="w-4 h-4" />
-          <span>Print or Save to PDF</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportCSV}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors shadow-sm"
+          >
+            <Download className="w-4 h-4 text-emerald-400" />
+            <span>Export CSV</span>
+          </button>
+
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-sm transition-colors"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Print or Save to PDF</span>
+          </button>
+        </div>
       </div>
 
       {/* The Printable Report Document Sheet */}

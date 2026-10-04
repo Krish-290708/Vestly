@@ -105,6 +105,61 @@ export default function GrantsPage() {
     }
   };
 
+  const handleExportCSV = () => {
+    if (!grants.length) return;
+    
+    const headers = [
+      'Grant ID',
+      'Employer / Company',
+      'Grant Type',
+      'Units Granted',
+      'Strike Price ($)',
+      'Latest FMV / 409A ($)',
+      'Total Value (@ FMV)',
+      'Vested Units',
+      'Vested Value ($)',
+      'Vested Exercise Cost ($)',
+      'Status',
+      'Grant Date',
+      'Vesting Start Date',
+      'Cliff Months',
+      'Expiration Date',
+    ];
+
+    const rows = grants.map((g) => [
+      `"${g.id}"`,
+      `"${g.company?.name || 'Unknown'}"`,
+      `"${g.grantType}"`,
+      g.unitsGranted,
+      g.strikePrice || 0,
+      g.latestFmvPerShare || 0,
+      ((g.unitsGranted || 0) * (g.latestFmvPerShare || 0)).toFixed(2),
+      g.vestedUnits || 0,
+      (g.vestedValue || 0).toFixed(2),
+      (g.vestedExerciseCost || 0).toFixed(2),
+      `"${g.status}"`,
+      `"${g.grantDate ? new Date(g.grantDate).toLocaleDateString() : ''}"`,
+      `"${g.vestingStartDate ? new Date(g.vestingStartDate).toLocaleDateString() : ''}"`,
+      g.cliffMonths || 0,
+      `"${g.expirationDate ? new Date(g.expirationDate).toLocaleDateString() : ''}"`,
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(r => r.join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Vestly_Grants_Ledger_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
@@ -121,13 +176,23 @@ export default function GrantsPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-sm transition-all"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Add Another Grant
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportCSV}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shadow-sm transition-all"
+          >
+            <Download className="w-4 h-4 text-emerald-400" />
+            Export CSV
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-sm transition-all"
+          >
+            <PlusCircle className="w-4 h-4" />
+            Add Another Grant
+          </button>
+        </div>
       </div>
 
       {/* Grants Cards List */}
