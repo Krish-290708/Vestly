@@ -30,6 +30,8 @@ export default function ActionCenterPage() {
 
   // Manual Task Creation State
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [taskForm, setTaskForm] = useState({
     title: '',
     description: '',
@@ -115,6 +117,25 @@ export default function ActionCenterPage() {
     }
   };
 
+  const handleSavePreferences = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      const res = await fetch('/api/actions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(preferences),
+      });
+      if (res.ok) {
+        setShowSettingsModal(false);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   const pendingList = reminders.filter(r => r.status === 'PENDING' || r.status === 'SNOOZED');
   const completedList = reminders.filter(r => r.status !== 'PENDING' && r.status !== 'SNOOZED');
 
@@ -132,13 +153,23 @@ export default function ActionCenterPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-xs transition-colors shrink-0"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Create Custom Task
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors shrink-0"
+          >
+            <Bell className="w-4 h-4 text-emerald-400" />
+            <span>Alert Preferences</span>
+          </button>
+
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-xs transition-colors shrink-0"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Create Custom Task</span>
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -401,6 +432,103 @@ export default function ActionCenterPage() {
                   className="px-4 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold hover:bg-emerald-400"
                 >
                   Save Task
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Alert Preferences Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <Bell className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Alert Preferences</h3>
+                  <p className="text-xs text-slate-400">Configure reminder triggers and delivery channels</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePreferences} className="space-y-4 text-xs">
+              <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={preferences.emailAlerts}
+                    onChange={(e) => setPreferences({ ...preferences, emailAlerts: e.target.checked })}
+                    className="mt-0.5 w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-emerald-500"
+                  />
+                  <div>
+                    <span className="font-semibold text-white block">Email Milestone Alerts</span>
+                    <span className="text-[11px] text-slate-400 block">
+                      Receive email digests when vesting events, PTEW windows, or 83(b) deadlines are within your lead time window.
+                    </span>
+                  </div>
+                </label>
+
+                <div className="border-t border-slate-800/80 pt-3">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={preferences.inAppAlerts}
+                      onChange={(e) => setPreferences({ ...preferences, inAppAlerts: e.target.checked })}
+                      className="mt-0.5 w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-emerald-500"
+                    />
+                    <div>
+                      <span className="font-semibold text-white block">In-App Dashboard Alerts</span>
+                      <span className="text-[11px] text-slate-400 block">
+                        Display persistent urgency badges and banner notifications in your portfolio dashboard.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">
+                  Advance Reminder Window
+                </label>
+                <select
+                  value={preferences.advanceReminderDays}
+                  onChange={(e) => setPreferences({ ...preferences, advanceReminderDays: parseInt(e.target.value, 10) })}
+                  className="w-full px-3 py-2 border border-slate-700 rounded-lg text-xs bg-slate-950 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                >
+                  <option value={7}>7 Days Before Deadline</option>
+                  <option value={14}>14 Days Before Deadline (Recommended)</option>
+                  <option value={30}>30 Days Before Deadline</option>
+                  <option value={60}>60 Days Before Deadline</option>
+                </select>
+                <span className="text-[10px] text-slate-500 mt-1 block">
+                  Lead time used to surface tasks in your pending actions list.
+                </span>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowSettingsModal(false)}
+                  className="px-3 py-1.5 rounded-lg text-slate-400 hover:bg-slate-800 font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingSettings}
+                  className="px-4 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold hover:bg-emerald-400 disabled:opacity-50"
+                >
+                  {savingSettings ? 'Saving...' : 'Save Preferences'}
                 </button>
               </div>
             </form>

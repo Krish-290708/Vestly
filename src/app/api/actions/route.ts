@@ -89,3 +89,33 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PUT(req: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json();
+    const { emailAlerts, inAppAlerts, advanceReminderDays } = body;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailAlerts: typeof emailAlerts === 'boolean' ? emailAlerts : undefined,
+        inAppAlerts: typeof inAppAlerts === 'boolean' ? inAppAlerts : undefined,
+        advanceReminderDays: typeof advanceReminderDays === 'number' ? advanceReminderDays : undefined,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      preferences: {
+        emailAlerts: updatedUser.emailAlerts,
+        inAppAlerts: updatedUser.inAppAlerts,
+        advanceReminderDays: updatedUser.advanceReminderDays,
+      },
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Failed to update preferences' }, { status: 500 });
+  }
+}
+
