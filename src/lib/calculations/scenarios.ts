@@ -1,5 +1,5 @@
 import { calculateEquityOutcome, COMPLIANCE_DISCLAIMER } from './taxes';
-import { GrantType, TaxBracketSettings } from '@/types';
+import { GrantType, TaxBracketSettings, TenderOfferInputs, TenderOfferResult } from '@/types';
 
 export interface ScenarioOutcome {
   id: string;
@@ -184,5 +184,105 @@ export function calculate83bAnalysis(
     estimatedTaxSavings: Math.round(estimatedTaxSavings),
     isUrgent: daysRemaining <= 10 && !isDeadlinePassed,
     disclaimer: COMPLIANCE_DISCLAIMER,
+  };
+}
+
+/**
+ * Calculates Secondary Market / Company Tender Offer financial and tax breakdown
+ */
+export function calculateTenderOffer(inputs: TenderOfferInputs): TenderOfferResult {
+  const {
+    vestedUnits,
+    tenderParticipationPct,
+    tenderPricePerShare,
+    strikePrice,
+    grantType,
+    alreadyExercised,
+    holdingPeriodMonths = 18,
+    transactionFeePct,
+    taxSettings,
+    projectedIpoPrice,
+  } = inputs;
+
+  const unitsOffered = Math.round(vestedUnits * (Math.max(0, Math.min(100, tenderParticipationPct)) / 100));
+  const retainedUnits = Math.max(0, vestedUnits - unitsOffered);
+  const grossTenderProceeds = Math.round(unitsOffered * tenderPricePerShare);
+
+  // Exercise Strike Offset: If employee has not exercised yet and it's an option (ISO/NSO),
+  // they execute a cashless exercise inside the tender offer where the strike cost is deducted.
+  const exerciseStrikeOffset = alreadyExercised || grantType === 'RSU' ? 0 : Math.round(unitsOffered * strikePrice);
+  const transactionFeeAmount = Math.round(grossTenderProceeds * (transactionFeePct / 100));
+
+  // Gross Gain before tax
+  const netTaxableGain = Math.max(0, grossTenderProceeds - exerciseStrikeOffset - transactionFeeAmount);
+
+  let ordinaryIncomeTax = 0;
+  let stateTax = 0;
+  let ficaTax = 0;
+  let capitalGainsTax = 0;
+  let stateCapitalGainsTax = 0;
+  let taxCharacter = '';
+
+  if (alreadyExercised) {
+    // Selling already owned shares
+    const isLongTerm = holdingPeriodMonths >= 12;
+    if (isLongTerm) {
+      taxCharacter = 'Long-Term Capital Gains (Held > 12 Months)';
+      capitalGainsTax = netTaxableGain * taxSettings.capitalGainsRate;
+      stateCapitalGainsTax = netTaxableGain * taxSettings.stateCapitalGainsRate;
+    } else {
+      taxCharacter = 'Short-Term Capital Gains (Ordinary Income Rates)';
+      ordinaryIncomeTax = netTaxableGain * taxSettings.federalTaxRate;
+      stateTax = netTaxableGain * taxSettings.stateTaxRate;
+    }
+  } else {
+    // Cashless exercise and tender (same-day disposition)
+    if (grantType === 'ISO') {
+      // Disqualifying disposition: Gain is taxed at ordinary rates; eliminates AMT since sold in same calendar year
+      taxCharacter = 'Disqualifying Disposition (Ordinary Income, No AMT)';
+      ordinaryIncomeTax = netTaxableGain * taxSettings.federalTaxRate;
+      stateTax = netTaxableGain * taxSettings.stateTaxRate;
+    } else if (grantType === 'NSO') {
+      taxCharacter = 'Ordinary Income (W-2 Wages + FICA/Medicare)';
+      ordinaryIncomeTax = netTaxableGain * taxSettings.federalTaxRate;
+      stateTax = netTaxableGain * taxSettings.stateTaxRate;
+      ficaTax = netTaxableGain * taxSettings.ficaRate;
+    } else if (grantType === 'RSU') {
+      taxCharacter = 'Capital Gains (RSU Vested Shares)';
+      const isLongTerm = holdingPeriodMonths >= 12;
+      const capRate = isLongTerm ? taxSettings.capitalGainsRate : taxSettings.federalTaxRate;
+      capitalGainsTax = netTaxableGain * capRate;
+      stateCapitalGainsTax = netTaxableGain * (isLongTerm ? taxSettings.stateCapitalGainsRate : taxSettings.stateTaxRate);
+    } else {
+      taxCharacter = 'ESPP Disqualifying Sale';
+      ordinaryIncomeTax = netTaxableGain * taxSettings.federalTaxRate;
+      stateTax = netTaxableGain * taxSettings.stateTaxRate;
+    }
+  }
+
+  const totalTax = Math.round(ordinaryIncomeTax + stateTax + ficaTax + capitalGainsTax + stateCapitalGainsTax);
+  const netCashPayout = Math.max(0, grossTenderProceeds - exerciseStrikeOffset - transactionFeeAmount - totalTax);
+  const retainedValueAtCurrentFmv = Math.round(retainedUnits * tenderPricePerShare);
+  const retainedValueAtProjectedIpo = Math.round(retainedUnits * projectedIpoPrice);
+
+  return {
+    unitsOffered,
+    retainedUnits,
+    grossTenderProceeds,
+    exerciseStrikeOffset,
+    transactionFeeAmount,
+    netTaxableGain,
+    estimatedTaxes: {
+      ordinaryIncomeTax: Math.round(ordinaryIncomeTax),
+      stateTax: Math.round(stateTax),
+      ficaTax: Math.round(ficaTax),
+      capitalGainsTax: Math.round(capitalGainsTax),
+      stateCapitalGainsTax: Math.round(stateCapitalGainsTax),
+      totalTax,
+    },
+    netCashPayout,
+    retainedValueAtCurrentFmv,
+    retainedValueAtProjectedIpo,
+    taxCharacter,
   };
 }

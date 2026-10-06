@@ -47,10 +47,7 @@ def main():
         server_process.wait()
     except KeyboardInterrupt:
         print("\nStopping Vestly server...")
-        if sys.platform == "win32":
-            subprocess.run(["taskkill", "/F", "/T", "/PID", str(server_process.pid)], capture_output=True)
-        else:
-            server_process.terminate()
+        server_process.terminate()
         print("Server stopped. Goodbye!")
 
 if __name__ == "__main__":

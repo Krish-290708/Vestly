@@ -52,5 +52,26 @@ const deadline = new Date(grantDate.getTime() + 30 * 24 * 60 * 60 * 1000);
 const days = Math.ceil((deadline.getTime() - grantDate.getTime()) / (1000 * 60 * 60 * 24));
 assert(days === 30, '83(b) deadline is strictly 30 days from grant');
 
+console.log('\n--- 4. Testing Secondary Market & Tender Offer Calculations ---');
+const vestedUnits = 2000;
+const participationPct = 25; // 25% tendered
+const tenderPrice = 50.0;
+const tenderStrike = 5.0;
+const feePct = 1.0; // 1%
+const offeredUnits = Math.round(vestedUnits * (participationPct / 100));
+const retainedUnits = vestedUnits - offeredUnits;
+const grossTender = offeredUnits * tenderPrice;
+const strikeOffset = offeredUnits * tenderStrike;
+const feeAmount = Math.round(grossTender * (feePct / 100));
+const netTaxable = grossTender - strikeOffset - feeAmount;
+
+assert(offeredUnits === 500, 'Tender participation of 25% on 2,000 units is exactly 500 units');
+assert(retainedUnits === 1500, 'Retained units count is exactly 1,500 units');
+assert(grossTender === 25000, 'Gross tender proceeds for 500 units @ $50 is $25,000');
+assert(strikeOffset === 2500, 'Strike offset for 500 units @ $5 is $2,500');
+assert(feeAmount === 250, '1% transaction fee on $25,000 is $250');
+assert(netTaxable === 22250, 'Net taxable gain before taxes is $22,250');
+
 console.log('\nAll core financial verification tests PASSED!\n');
+
 

@@ -148,3 +148,38 @@ export interface ActionReminderItem {
   urgency: UrgencyLevel;
   createdAt?: string | Date;
 }
+
+export interface TenderOfferInputs {
+  vestedUnits: number;
+  tenderParticipationPct: number;
+  tenderPricePerShare: number;
+  strikePrice: number;
+  grantType: GrantType;
+  alreadyExercised: boolean;
+  holdingPeriodMonths?: number;
+  transactionFeePct: number;
+  taxSettings: TaxBracketSettings;
+  projectedIpoPrice: number;
+}
+
+export interface TenderOfferResult {
+  unitsOffered: number;
+  retainedUnits: number;
+  grossTenderProceeds: number;
+  exerciseStrikeOffset: number;
+  transactionFeeAmount: number;
+  netTaxableGain: number;
+  estimatedTaxes: {
+    ordinaryIncomeTax: number;
+    stateTax: number;
+    ficaTax: number;
+    capitalGainsTax: number;
+    stateCapitalGainsTax: number;
+    totalTax: number;
+  };
+  netCashPayout: number;
+  retainedValueAtCurrentFmv: number;
+  retainedValueAtProjectedIpo: number;
+  taxCharacter: string;
+}
+
