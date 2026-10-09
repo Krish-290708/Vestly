@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { modelScenarios, calculate83bAnalysis, calculateTenderOffer } from '@/lib/calculations/scenarios';
 import { COMPLIANCE_DISCLAIMER } from '@/lib/calculations/taxes';
+import Section83bModal from '@/components/scenarios/Section83bModal';
 
 export default function ScenariosPage() {
   const [grants, setGrants] = useState<any[]>([]);
@@ -778,94 +779,14 @@ export default function ScenariosPage() {
       </div>
 
       {/* IRS 83(b) Printable Letter Modal */}
-      {show83bLetterModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 rounded-2xl max-w-2xl w-full border border-slate-800 shadow-2xl overflow-hidden my-8 space-y-6 p-6 sm:p-8 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-white">IRS Section 83(b) Election Template</h3>
-                <p className="text-xs text-slate-400">Ready-to-print certified election notice</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => window.print()}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center gap-1.5 border border-slate-700"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  Print / Save PDF
-                </button>
-                <button
-                  onClick={() => setShow83bLetterModal(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-
-            {/* Letter Content */}
-            <div className="p-6 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono space-y-4 text-slate-200 leading-relaxed overflow-y-auto max-h-[60vh]">
-              <div>
-                <strong className="text-white">DEPARTMENT OF THE TREASURY</strong><br />
-                INTERNAL REVENUE SERVICE CENTER<br />
-                (Mail to IRS Service Center where you file Form 1040)
-              </div>
-
-              <div>
-                <strong className="text-emerald-400">SUBJECT: ELECTION PURSUANT TO SECTION 83(b) OF THE INTERNAL REVENUE CODE</strong>
-              </div>
-
-              <p>
-                The undersigned taxpayer hereby elects, pursuant to Section 83(b) of the Internal Revenue Code of 1986, as amended, to include in gross income the excess (if any) of the fair market value of the property described below over the amount paid for such property.
-              </p>
-
-              <div>
-                <strong className="text-slate-300">1. Taxpayer Information:</strong><br />
-                Name: [Taxpayer Full Name]<br />
-                Address: [Taxpayer Home Address]<br />
-                Social Security Number: [Taxpayer SSN]
-              </div>
-
-              <div>
-                <strong className="text-slate-300">2. Description of Property:</strong><br />
-                {units.toLocaleString()} shares of Common Stock of {selectedGrant?.company?.name || '[Company Name]'}, a Delaware corporation.
-              </div>
-
-              <div>
-                <strong className="text-slate-300">3. Date Property Transferred:</strong><br />
-                {new Date(selectedGrant?.grantDate || Date.now()).toLocaleDateString()}
-              </div>
-
-              <div>
-                <strong className="text-slate-300">4. Restrictions to Which Property is Subject:</strong><br />
-                The shares are subject to vesting and a repurchase option in favor of the Company upon termination of employment or service.
-              </div>
-
-              <div>
-                <strong className="text-slate-300">5. Fair Market Value at Time of Transfer:</strong><br />
-                ${(units * currentFmv).toLocaleString()} (${currentFmv.toFixed(2)} per share).
-              </div>
-
-              <div>
-                <strong className="text-slate-300">6. Amount Paid for Property:</strong><br />
-                ${(units * strikePrice).toLocaleString()} (${strikePrice.toFixed(2)} per share).
-              </div>
-
-              <div>
-                <strong className="text-slate-300">7. Gross Income Recognized:</strong><br />
-                ${Math.max(0, units * (currentFmv - strikePrice)).toLocaleString()}.
-              </div>
-
-              <div className="pt-4 text-slate-300">
-                Dated: {new Date().toLocaleDateString()}<br /><br />
-                ________________________________________<br />
-                Taxpayer Signature
-              </div>
-            </div>
-
-          </div>
-        </div>
-      )}
+      <Section83bModal
+        isOpen={show83bLetterModal}
+        onClose={() => setShow83bLetterModal(false)}
+        units={units}
+        currentFmv={currentFmv}
+        strikePrice={strikePrice}
+        selectedGrant={selectedGrant}
+      />
 
     </div>
   );

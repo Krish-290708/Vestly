@@ -1,3 +1,2 @@
-// Test runner that runs tests without external build tools
-const { generateVestingSchedule, calculateVestingProgress } = require('../src/lib/calculations/vesting.ts');
-
+// Test runner that executes the calculation test suite
+require('./test-calculations.js');

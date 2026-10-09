@@ -19,14 +19,16 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(base_dir)
 
-    # Check if dev.db exists, otherwise seed
-    db_file = os.path.join(base_dir, "dev.db")
-    if not os.path.exists(db_file):
+    # Check if database exists in prisma/dev.db or root dev.db
+    db_file_prisma = os.path.join(base_dir, "prisma", "dev.db")
+    db_file_root = os.path.join(base_dir, "dev.db")
+    
+    if not os.path.exists(db_file_prisma) and not os.path.exists(db_file_root):
         print("  → Initializing local SQLite database & demo data...")
         subprocess.run(["npx", "prisma", "db", "push"], shell=True, check=True)
         subprocess.run(["node", "prisma/seed.js"], shell=True, check=True)
     else:
-        print("  ✔ Database ready (dev.db found)")
+        print("  ✔ Database ready (SQLite dev.db found)")
 
     print("\n[2/3] Starting Vestly Next.js Application Server...")
     print("  → Port: http://localhost:3000")
@@ -47,9 +49,11 @@ def main():
         server_process.wait()
     except KeyboardInterrupt:
         print("\nStopping Vestly server...")
-        server_process.terminate()
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(server_process.pid)], capture_output=True)
+        else:
+            server_process.terminate()
         print("Server stopped. Goodbye!")
 
 if __name__ == "__main__":
     main()
-

@@ -44,18 +44,18 @@ export default function ReportsPage() {
       {/* Top Action Bar (hidden when printing) */}
       <div className="flex items-center justify-between no-print">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <FileText className="w-6 h-6 text-emerald-600" />
+          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+            <FileText className="w-6 h-6 text-emerald-400" />
             CPA & Financial Advisor Summary Report
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             Clean, printable audit document prepared for tax preparation and wealth planning
           </p>
         </div>
 
         <button
           onClick={handlePrint}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-sm transition-colors"
         >
           <Printer className="w-4 h-4" />
           <span>Print or Save to PDF</span>
