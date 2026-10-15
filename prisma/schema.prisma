@@ -1,0 +1,145 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                String           @id @default(uuid())
+  email             String           @unique
+  passwordHash      String
+  name              String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  emailAlerts       Boolean          @default(true)
+  inAppAlerts       Boolean          @default(true)
+  advanceReminderDays Int            @default(14)
+  
+  grants            Grant[]
+  actions           ActionReminder[]
+  auditLogs         AuditLog[]
+  watchlist         WatchlistItem[]
+}
+
+model Company {
+  id                String           @id @default(uuid())
+  name              String           @unique
+  ticker            String?
+  isPublic          Boolean          @default(false)
+  sector            String           @default("Technology")
+  description       String?
+  logoUrl           String?
+  foundedYear       Int?
+  keyLeadership     String?          // JSON or formatted string e.g. "Patrick Collison (CEO)"
+  fundingHistory    String?          // JSON or formatted string e.g. "Series I ($6.5B raised)"
+  latestValuation   Float?           // Total market cap or private company valuation in USD
+  latestFmvPerShare Float            // Fair market value per share / 409A price in USD
+  lastFmvUpdateDate DateTime         @default(now())
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  grants            Grant[]
+  watchlistedBy     WatchlistItem[]
+}
+
+model Grant {
+  id                String           @id @default(uuid())
+  userId            String
+  companyId         String
+  grantIdentifier   String           // e.g. "GRANT-2023-A" or "Initial ISO Grant"
+  grantType         String           // "ISO", "NSO", "RSU", "ESPP"
+  unitsGranted      Int
+  strikePrice       Float            // $ per share (0 for RSU)
+  grantDate         DateTime
+  vestingStartDate  DateTime
+  cliffMonths       Int              @default(12)
+  vestingSchedule   String           @default("4_YEAR_1_YEAR_CLIFF") // "4_YEAR_1_YEAR_CLIFF", "3_YEAR_MONTHLY", "CUSTOM"
+  expirationDate    DateTime
+  status            String           @default("VESTING") // "VESTING", "FULLY_VESTED", "EXPIRING_SOON", "EXPIRED", "EXERCISED"
+  documentName      String?
+  documentPath      String?
+  earlyExercisable  Boolean          @default(false)
+  notes             String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company           Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  vestingEvents     VestingEvent[]
+  exerciseEvents    ExerciseEvent[]
+  actions           ActionReminder[]
+  auditLogs         AuditLog[]
+}
+
+model VestingEvent {
+  id                String           @id @default(uuid())
+  grantId           String
+  vestDate          DateTime
+  unitsVested       Int
+  isVested          Boolean          @default(false)
+  cumulativeVested  Int
+  createdAt         DateTime         @default(now())
+
+  grant             Grant            @relation(fields: [grantId], references: [id], onDelete: Cascade)
+}
+
+model ExerciseEvent {
+  id                String           @id @default(uuid())
+  grantId           String
+  exerciseDate      DateTime         @default(now())
+  unitsExercised    Int
+  strikePricePaid   Float            // strike price at time of exercise
+  totalCostPaid     Float            // unitsExercised * strikePricePaid
+  fmvAtExercise     Float            // FMV / 409A at exercise date
+  spreadAtExercise  Float            // (fmvAtExercise - strikePricePaid) * unitsExercised
+  dispositionType   String           @default("N_A") // "QUALIFYING", "DISQUALIFYING", "N_A"
+  estimatedTaxPaid  Float            @default(0)
+  createdAt         DateTime         @default(now())
+
+  grant             Grant            @relation(fields: [grantId], references: [id], onDelete: Cascade)
+}
+
+model ActionReminder {
+  id                String           @id @default(uuid())
+  userId            String
+  grantId           String?
+  type              String           // "VESTING_EVENT", "EXPIRATION_WARNING", "PTEW_EXPIRATION", "ELECTION_83B", "ANNUAL_REVIEW"
+  title             String
+  description       String?
+  dueDate           DateTime
+  status            String           @default("PENDING") // "PENDING", "EXERCISED", "SOLD", "DECLINED", "SNOOZED", "COMPLETED"
+  snoozedUntil      DateTime?
+  urgency           String           @default("MEDIUM") // "LOW", "MEDIUM", "HIGH", "CRITICAL"
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grant             Grant?           @relation(fields: [grantId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id                String           @id @default(uuid())
+  userId            String
+  grantId           String?
+  action            String           // e.g. "GRANT_CREATED", "STATUS_UPDATED", "SIMULATION_RUN", "DOCUMENT_UPLOADED", "ACTION_COMPLETED"
+  details           String?
+  timestamp         DateTime         @default(now())
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grant             Grant?           @relation(fields: [grantId], references: [id], onDelete: Cascade)
+}
+
+model WatchlistItem {
+  id                String           @id @default(uuid())
+  userId            String
+  companyId         String
+  createdAt         DateTime         @default(now())
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company           Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+}
