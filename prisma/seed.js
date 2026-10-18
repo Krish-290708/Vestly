@@ -5,6 +5,8 @@ const prisma = new PrismaClient();
 
 async function main() {
   console.log('Clearing existing records...');
+  await prisma.savedScenario.deleteMany();
+  await prisma.learnProgress.deleteMany();
   await prisma.actionReminder.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.exerciseEvent.deleteMany();
@@ -107,6 +109,9 @@ async function main() {
       emailAlerts: true,
       inAppAlerts: true,
       advanceReminderDays: 14,
+      filingStatus: 'SINGLE',
+      stateCode: 'CA',
+      annualIncome: 185000,
     }
   });
 
@@ -296,10 +301,39 @@ async function main() {
   console.log('Seeding Watchlist...');
   await prisma.watchlistItem.createMany({
     data: [
-      { userId: demoUser.id, companyId: stripe.id },
-      { userId: demoUser.id, companyId: databricks.id },
-      { userId: demoUser.id, companyId: apple.id },
-      { userId: demoUser.id, companyId: nvidia.id },
+      { userId: demoUser.id, companyId: stripe.id, note: 'Primary employer holding. Watching for 409A updates.' },
+      { userId: demoUser.id, companyId: databricks.id, note: 'Advisory grant holding. Watching for liquidity event.' },
+      { userId: demoUser.id, companyId: apple.id, note: 'Public benchmark for consumer technology peers.' },
+      { userId: demoUser.id, companyId: nvidia.id, note: 'Hardware and AI valuation benchmark.' },
+    ]
+  });
+
+  console.log('Seeding Saved Scenarios...');
+  await prisma.savedScenario.createMany({
+    data: [
+      {
+        userId: demoUser.id,
+        grantId: grant1.id,
+        name: 'Stripe 2026 Bull Case ($65 Exit)',
+        kind: 'STRATEGY',
+        inputs: JSON.stringify({ exitPrice: 65, units: 6000, strategy: 'exercise_and_hold' }),
+      },
+      {
+        userId: demoUser.id,
+        grantId: grant2.id,
+        name: 'Databricks Cashless at IPO ($95)',
+        kind: 'CALCULATOR',
+        inputs: JSON.stringify({ exitPrice: 95, units: 4000, filingStatus: 'SINGLE', stateCode: 'CA' }),
+      },
+    ]
+  });
+
+  console.log('Seeding Learn Progress...');
+  await prisma.learnProgress.createMany({
+    data: [
+      { userId: demoUser.id, slug: 'evaluating-an-offer' },
+      { userId: demoUser.id, slug: 'iso-vs-nso-vs-rsu-vs-espp' },
+      { userId: demoUser.id, slug: 'early-exercise-and-83b' },
     ]
   });
 

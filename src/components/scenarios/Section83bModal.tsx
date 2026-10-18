@@ -12,6 +12,7 @@ interface Section83bModalProps {
   selectedGrant?: {
     company?: { name?: string };
     grantDate?: string | Date;
+    purchaseDate?: string | Date;
   } | null;
 }
 
@@ -26,7 +27,7 @@ export default function Section83bModal({
   if (!isOpen) return null;
 
   const companyName = selectedGrant?.company?.name || '[Company Name]';
-  const grantDate = new Date(selectedGrant?.grantDate || Date.now()).toLocaleDateString();
+  const transferDate = new Date(selectedGrant?.purchaseDate || selectedGrant?.grantDate || Date.now()).toLocaleDateString();
   const totalFmv = (units * currentFmv).toLocaleString();
   const totalPaid = (units * strikePrice).toLocaleString();
   const grossIncome = Math.max(0, units * (currentFmv - strikePrice)).toLocaleString();
@@ -86,7 +87,7 @@ export default function Section83bModal({
 
           <div>
             <strong className="text-slate-300">3. Date Property Transferred:</strong><br />
-            {grantDate}
+            {transferDate}
           </div>
 
           <div>

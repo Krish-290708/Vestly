@@ -41,4 +41,6 @@ prisma/*.db-journal
 
 # Uploaded grant files
 /public/uploads
+storage/
+.redesign/
 audit/

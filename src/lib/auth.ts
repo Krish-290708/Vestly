@@ -33,10 +33,20 @@ export function verifyToken(token: string): SessionPayload | null {
   }
 }
 
-export async function getCurrentUser() {
+export async function getCurrentUser(req?: any) {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    let token: string | undefined = undefined;
+    if (req?.cookies && typeof req.cookies.get === 'function') {
+      token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+    }
+    if (!token) {
+      try {
+        const cookieStore = cookies();
+        token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+      } catch {
+        // cookies() might be called outside a request context
+      }
+    }
     if (!token) return null;
 
     const payload = verifyToken(token);

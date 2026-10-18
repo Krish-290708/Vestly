@@ -77,8 +77,9 @@ export default function ScenariosPage() {
     taxSettings
   );
 
+  const purchaseDate = (selectedGrant as any)?.exerciseDate || (selectedGrant as any)?.purchaseDate || new Date().toISOString();
   const analysis83b = calculate83bAnalysis(
-    selectedGrant?.grantDate || new Date().toISOString(),
+    purchaseDate,
     units,
     strikePrice,
     currentFmv,

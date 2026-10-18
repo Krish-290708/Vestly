@@ -8,20 +8,25 @@ generator client {
 }
 
 model User {
-  id                String           @id @default(uuid())
-  email             String           @unique
-  passwordHash      String
-  name              String
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  emailAlerts       Boolean          @default(true)
-  inAppAlerts       Boolean          @default(true)
-  advanceReminderDays Int            @default(14)
+  id                  String           @id @default(uuid())
+  email               String           @unique
+  passwordHash        String
+  name                String
+  filingStatus        String           @default("SINGLE")
+  stateCode           String?
+  annualIncome        Float?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  emailAlerts         Boolean          @default(true)
+  inAppAlerts         Boolean          @default(true)
+  advanceReminderDays Int              @default(14)
   
-  grants            Grant[]
-  actions           ActionReminder[]
-  auditLogs         AuditLog[]
-  watchlist         WatchlistItem[]
+  grants              Grant[]
+  actions             ActionReminder[]
+  auditLogs           AuditLog[]
+  watchlist           WatchlistItem[]
+  savedScenarios      SavedScenario[]
+  learnProgress       LearnProgress[]
 }
 
 model Company {
@@ -72,6 +77,7 @@ model Grant {
   exerciseEvents    ExerciseEvent[]
   actions           ActionReminder[]
   auditLogs         AuditLog[]
+  savedScenarios    SavedScenario[]
 }
 
 model VestingEvent {
@@ -109,7 +115,7 @@ model ActionReminder {
   type              String           // "VESTING_EVENT", "EXPIRATION_WARNING", "PTEW_EXPIRATION", "ELECTION_83B", "ANNUAL_REVIEW"
   title             String
   description       String?
-  dueDate           DateTime
+  dueDate           DateTime?
   status            String           @default("PENDING") // "PENDING", "EXERCISED", "SOLD", "DECLINED", "SNOOZED", "COMPLETED"
   snoozedUntil      DateTime?
   urgency           String           @default("MEDIUM") // "LOW", "MEDIUM", "HIGH", "CRITICAL"
@@ -136,6 +142,7 @@ model WatchlistItem {
   id                String           @id @default(uuid())
   userId            String
   companyId         String
+  note              String?
   createdAt         DateTime         @default(now())
 
   user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -143,3 +150,28 @@ model WatchlistItem {
 
   @@unique([userId, companyId])
 }
+
+model SavedScenario {
+  id                String           @id @default(uuid())
+  userId            String
+  grantId           String?
+  name              String
+  kind              String           // "CALCULATOR" | "STRATEGY" | "TENDER" | "DEPARTURE" | "DILUTION"
+  inputs            String           // JSON
+  createdAt         DateTime         @default(now())
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grant             Grant?           @relation(fields: [grantId], references: [id], onDelete: Cascade)
+}
+
+model LearnProgress {
+  id                String           @id @default(uuid())
+  userId            String
+  slug              String
+  completedAt       DateTime         @default(now())
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slug])
+}
+

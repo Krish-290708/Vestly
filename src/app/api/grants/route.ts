@@ -121,92 +121,95 @@ export async function POST(req: NextRequest) {
     const vStartDate = new Date(vestingStartDate);
     const expDate = expirationDate ? new Date(expirationDate) : new Date(gDate.getTime() + 10 * 365.25 * 24 * 60 * 60 * 1000);
 
-    // Create Grant
-    const newGrant = await prisma.grant.create({
-      data: {
-        userId: user.id,
-        companyId: company.id,
-        grantIdentifier,
-        grantType,
-        unitsGranted: units,
-        strikePrice: strike,
-        grantDate: gDate,
-        vestingStartDate: vStartDate,
-        cliffMonths: parseInt(cliffMonths, 10) || 0,
+    // Create Grant, Vesting Events, Reminders, and Audit Log in a single transaction
+    const newGrant = await prisma.$transaction(async (tx) => {
+      const grant = await tx.grant.create({
+        data: {
+          userId: user.id,
+          companyId: company.id,
+          grantIdentifier,
+          grantType,
+          unitsGranted: units,
+          strikePrice: strike,
+          grantDate: gDate,
+          vestingStartDate: vStartDate,
+          cliffMonths: parseInt(cliffMonths, 10) || 0,
+          vestingSchedule,
+          expirationDate: expDate,
+          earlyExercisable: Boolean(earlyExercisable),
+          notes: notes || null,
+          status: 'VESTING',
+        },
+        include: {
+          company: true,
+        }
+      });
+
+      // Generate Vesting Events
+      const rawEvents = generateVestingSchedule(
+        units,
+        vStartDate,
         vestingSchedule,
-        expirationDate: expDate,
-        earlyExercisable: Boolean(earlyExercisable),
-        notes: notes || null,
-        status: 'VESTING',
-      },
-      include: {
-        company: true,
+        parseInt(cliffMonths, 10) || 0
+      );
+
+      for (const evt of rawEvents) {
+        await tx.vestingEvent.create({
+          data: {
+            grantId: grant.id,
+            vestDate: evt.vestDate,
+            unitsVested: evt.unitsVested,
+            cumulativeVested: evt.cumulativeVested,
+            isVested: evt.isVested,
+          }
+        });
       }
-    });
 
-    // Generate Vesting Events
-    const rawEvents = generateVestingSchedule(
-      units,
-      vStartDate,
-      vestingSchedule,
-      parseInt(cliffMonths, 10) || 0
-    );
+      // Auto-generate Action Reminders for this new grant
+      // 1. General 83(b) notice if early exercisable (no countdown date until exercise occurs)
+      if (earlyExercisable) {
+        await tx.actionReminder.create({
+          data: {
+            userId: user.id,
+            grantId: grant.id,
+            type: 'ELECTION_83B',
+            title: 'If you exercise early, file Section 83(b) within 30 days of purchase',
+            description: `You indicated this grant is early exercisable. If you exercise before vest, you must file a Section 83(b) election with the IRS within 30 days of share purchase!`,
+            dueDate: null,
+            urgency: 'MEDIUM',
+            status: 'PENDING',
+          }
+        });
+      }
 
-    for (const evt of rawEvents) {
-      await prisma.vestingEvent.create({
-        data: {
-          grantId: newGrant.id,
-          vestDate: evt.vestDate,
-          unitsVested: evt.unitsVested,
-          cumulativeVested: evt.cumulativeVested,
-          isVested: evt.isVested,
-        }
-      });
-    }
+      // 2. Upcoming first vest / cliff reminder
+      const firstVest = rawEvents[0];
+      if (firstVest) {
+        await tx.actionReminder.create({
+          data: {
+            userId: user.id,
+            grantId: grant.id,
+            type: 'VESTING_EVENT',
+            title: `${company.name} Initial Vesting Milestone (${firstVest.unitsVested.toLocaleString()} units)`,
+            description: `Vesting cliff/milestone date for ${grantIdentifier}.`,
+            dueDate: firstVest.vestDate,
+            urgency: 'MEDIUM',
+            status: 'PENDING',
+          }
+        });
+      }
 
-    // Auto-generate high-priority Action Reminders for this new grant
-    // 1. 83(b) deadline if early exercisable
-    if (earlyExercisable) {
-      const deadline83b = new Date(gDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-      await prisma.actionReminder.create({
+      // Record Audit Log
+      await tx.auditLog.create({
         data: {
           userId: user.id,
-          grantId: newGrant.id,
-          type: 'ELECTION_83B',
-          title: `IRS Section 83(b) Deadline for ${company.name} (${grantIdentifier})`,
-          description: 'You indicated this grant is early exercisable. If exercising before vest, file Section 83(b) election with IRS within 30 days of purchase!',
-          dueDate: deadline83b,
-          urgency: 'CRITICAL',
-          status: 'PENDING',
+          grantId: grant.id,
+          action: 'GRANT_CREATED',
+          details: `Created ${grantType} grant '${grantIdentifier}' for ${company.name} with ${units.toLocaleString()} units at $${strike.toFixed(2)} strike.`,
         }
       });
-    }
 
-    // 2. Upcoming first vest / cliff reminder
-    const firstVest = rawEvents[0];
-    if (firstVest) {
-      await prisma.actionReminder.create({
-        data: {
-          userId: user.id,
-          grantId: newGrant.id,
-          type: 'VESTING_EVENT',
-          title: `${company.name} Initial Vesting Milestone (${firstVest.unitsVested.toLocaleString()} units)`,
-          description: `Vesting cliff/milestone date for ${grantIdentifier}.`,
-          dueDate: firstVest.vestDate,
-          urgency: 'MEDIUM',
-          status: 'PENDING',
-        }
-      });
-    }
-
-    // Record Audit Log
-    await prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        grantId: newGrant.id,
-        action: 'GRANT_CREATED',
-        details: `Created ${grantType} grant '${grantIdentifier}' for ${company.name} with ${units.toLocaleString()} units at $${strike.toFixed(2)} strike.`,
-      }
+      return grant;
     });
 
     return NextResponse.json({ success: true, grant: newGrant });

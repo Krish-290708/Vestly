@@ -141,42 +141,48 @@ export function modelScenarios(
 
 /**
  * Calculates Section 83(b) Election analysis
+ * Note: IRS Section 83(b) deadline is strictly 30 days after share purchase/transfer (early exercise),
+ * NOT 30 days after grant date.
  */
 export function calculate83bAnalysis(
-  grantDate: Date | string,
-  unitsGranted: number,
+  purchaseDate: Date | string,
+  unitsPurchased: number,
   strikePrice: number,
   currentFmv: number,
   projectedExitPrice: number,
   ordinaryTaxRate: number = 0.32,
-  capitalGainsRate: number = 0.20
+  capitalGainsRate: number = 0.20,
+  asOfDate: Date = new Date()
 ) {
-  const gDate = new Date(grantDate);
-  const deadlineDate = new Date(gDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const now = new Date();
-  const daysRemaining = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  const isDeadlinePassed = daysRemaining < 0;
+  const pDate = new Date(purchaseDate);
+  const deadlineDate = new Date(pDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const now = new Date(asOfDate);
+  const diffMs = deadlineDate.getTime() - now.getTime();
+  const daysRemainingRaw = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const isDeadlinePassed = daysRemainingRaw < 0;
+  const daysRemaining = Math.max(0, daysRemainingRaw);
 
-  // Immediate tax if 83(b) filed (spread at grant is usually $0 or minimal)
-  const spreadAtGrant = Math.max(0, unitsGranted * (currentFmv - strikePrice));
-  const taxWith83bToday = spreadAtGrant * ordinaryTaxRate;
+  // Immediate tax if 83(b) filed (spread at purchase is usually $0 or minimal)
+  const spreadAtPurchase = Math.max(0, unitsPurchased * (currentFmv - strikePrice));
+  const taxWith83bToday = spreadAtPurchase * ordinaryTaxRate;
   
   // Tax at future vesting without 83(b)
-  const estimatedFutureVestValue = unitsGranted * (projectedExitPrice * 0.5); // assumed mid-point
+  const estimatedFutureVestValue = unitsPurchased * (projectedExitPrice * 0.5); // assumed mid-point
   const estimatedTaxWithout83b = estimatedFutureVestValue * ordinaryTaxRate;
 
   // Tax at exit
-  const exitGain = Math.max(0, unitsGranted * (projectedExitPrice - strikePrice));
+  const exitGain = Math.max(0, unitsPurchased * (projectedExitPrice - strikePrice));
   const exitTaxWith83b = exitGain * capitalGainsRate;
 
   const totalTaxWith83b = taxWith83bToday + exitTaxWith83b;
-  const totalTaxWithout83b = estimatedTaxWithout83b + (unitsGranted * (projectedExitPrice - projectedExitPrice * 0.5) * capitalGainsRate);
+  const totalTaxWithout83b = estimatedTaxWithout83b + (unitsPurchased * (projectedExitPrice - projectedExitPrice * 0.5) * capitalGainsRate);
   const estimatedTaxSavings = Math.max(0, totalTaxWithout83b - totalTaxWith83b);
 
   return {
-    grantDate: gDate,
+    purchaseDate: pDate,
+    grantDate: pDate, // compatibility alias
     deadlineDate,
-    daysRemaining: Math.max(0, daysRemaining),
+    daysRemaining,
     isDeadlinePassed,
     taxWith83bToday: Math.round(taxWith83bToday),
     totalTaxWith83b: Math.round(totalTaxWith83b),
