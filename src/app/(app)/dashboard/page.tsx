@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   TrendingUp, 
   Layers, 
@@ -302,10 +303,10 @@ export default function DashboardPage() {
             <h3 className="text-base font-bold text-white">Your Equity Grants</h3>
             <p className="text-xs text-slate-400">All registered grants across employers</p>
           </div>
-          <a href="/grants" className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+          <Link href="/grants" className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
             <span>Manage & Upload Agreements</span>
             <ChevronRight className="w-3.5 h-3.5" />
-          </a>
+          </Link>
         </div>
 
         {grants.length > 0 ? (

@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import { Newsreader, IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/layout/Navbar';
-import DisclaimerBanner from '@/components/layout/DisclaimerBanner';
-import Footer from '@/components/layout/Footer';
+import { ToastProvider } from '@/components/ui/Toast';
 
 const newsreader = Newsreader({
   subsets: ['latin'],
@@ -52,13 +50,8 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-paper text-ink selection:bg-accent selection:text-accent-contrast">
-        <DisclaimerBanner />
-        <Navbar />
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          {children}
-        </main>
-        <Footer />
+      <body className="min-h-screen bg-paper text-ink selection:bg-accent selection:text-accent-contrast">
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

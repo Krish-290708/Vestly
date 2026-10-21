@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { DollarSign, Calendar, Clock } from 'lucide-react';
 
 export interface NextVestEventInfo {
@@ -87,9 +88,9 @@ export default function PortfolioMetricsGrid({
         </div>
         <div className="text-xs text-slate-400 pt-1 border-t border-slate-800 flex items-center justify-between">
           <span>Strike cash needed</span>
-          <a href="/calculator" className="text-emerald-400 font-semibold hover:underline">
+          <Link href="/calculator" className="text-emerald-400 font-semibold hover:underline">
             Model taxes →
-          </a>
+          </Link>
         </div>
       </div>
 

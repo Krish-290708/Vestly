@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   PieChart, 
@@ -91,7 +92,7 @@ export default function Navbar() {
           
           {/* Logo */}
           <div className="flex items-center gap-8">
-            <a href="/dashboard" className="flex items-center gap-2.5 group">
+            <Link href="/dashboard" className="flex items-center gap-2.5 group">
               <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-slate-950 font-bold shadow-md shadow-emerald-500/20 group-hover:bg-emerald-400 transition-colors">
                 <Sparkles className="w-4 h-4" />
               </div>
@@ -103,7 +104,7 @@ export default function Navbar() {
                   </span>
                 </span>
               </div>
-            </a>
+            </Link>
 
             {/* Desktop Navigation Links */}
             <div className="hidden lg:flex items-center space-x-1">

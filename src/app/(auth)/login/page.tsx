@@ -1,11 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Sparkles, ArrowRight, Lock, Mail, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowRight, Lock, Mail, AlertCircle } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextUrl = searchParams.get('next') || '/dashboard';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,7 +34,7 @@ export default function LoginPage() {
         throw new Error(data.error || 'Failed to sign in');
       }
 
-      router.push('/dashboard');
+      router.push(nextUrl);
       router.refresh();
     } catch (err: any) {
       setError(err.message);
@@ -46,7 +51,7 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Demo login failed');
 
-      router.push('/dashboard');
+      router.push(nextUrl);
       router.refresh();
     } catch (err: any) {
       setError(err.message);
@@ -58,8 +63,8 @@ export default function LoginPage() {
   return (
     <div className="max-w-md mx-auto my-10 sm:my-16 space-y-6">
       <div className="text-center space-y-2">
-        <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 font-bold mx-auto shadow-md shadow-emerald-500/20">
-          <Sparkles className="w-5 h-5" />
+        <div className="flex justify-center mb-3">
+          <Logo size="md" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-white">
           Sign In to Vestly
@@ -178,9 +183,12 @@ export default function LoginPage() {
 
         <div className="text-center text-xs text-slate-400">
           Don&apos;t have an account yet?{' '}
-          <a href="/register" className="font-semibold text-emerald-400 hover:text-emerald-300">
+          <Link
+            href={nextUrl !== '/dashboard' ? `/register?next=${encodeURIComponent(nextUrl)}` : '/register'}
+            className="font-semibold text-emerald-400 hover:text-emerald-300"
+          >
             Create account
-          </a>
+          </Link>
         </div>
       </div>
     </div>

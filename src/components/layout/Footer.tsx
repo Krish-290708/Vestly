@@ -1,108 +1,122 @@
 import React from 'react';
-import { Shield, Sparkles, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { Logo } from '@/components/ui/Logo';
 
 export default function Footer() {
+  const productLinks = [
+    { label: 'Overview', href: '/dashboard' },
+    { label: 'Grants', href: '/grants' },
+    { label: 'Calculator', href: '/calculator' },
+    { label: 'Scenarios & 83(b)', href: '/scenarios' },
+    { label: 'Action center', href: '/actions' },
+    { label: 'Reports', href: '/reports' },
+    { label: 'Settings', href: '/settings' },
+  ];
+
+  const researchLinks = [
+    { label: 'Market overview', href: '/research/market' },
+    { label: 'Company explorer', href: '/research/companies' },
+    { label: 'Company ESOP pool', href: '/pool' },
+    { label: 'Market news', href: '/research/news' },
+    { label: 'Watchlist', href: '/research/watchlist' },
+  ];
+
+  const learnLinks = [
+    { label: 'Equity guides', href: '/learn' },
+    { label: 'Financial glossary', href: '/learn#glossary' },
+    { label: 'Section 83(b) election', href: '/learn#section-83b' },
+    { label: 'ISO vs NSO taxation', href: '/learn#iso' },
+  ];
+
   return (
-    <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-8 px-4 sm:px-6 lg:px-8 mt-auto no-print">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-        <div className="space-y-3 md:col-span-2">
-          <div className="flex items-center gap-2 text-white font-semibold text-base">
-            <div className="w-6 h-6 rounded bg-emerald-500 flex items-center justify-center text-slate-950 font-bold text-xs">
-              <Sparkles className="w-3.5 h-3.5" />
+    <footer className="border-t border-rule bg-paper text-ink font-sans transition-colors mt-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-8 pb-8 border-b border-rule">
+          {/* Brand & Mission */}
+          <div className="md:col-span-2 space-y-3">
+            <Link href="/" className="inline-block focus:outline-hidden" title="Vestly">
+              <Logo size="sm" />
+            </Link>
+            <p className="text-xs text-muted leading-relaxed max-w-sm">
+              A quiet, numbers-first equity compensation calculator and scenario planning tool
+              for employees holding stock options, RSUs, and ESPPs.
+            </p>
+            <div className="text-[11px] font-mono text-muted space-y-0.5">
+              <p>Data source: Finnhub Market API (end-of-day quotes)</p>
+              <p>Valuation models: Deterministic IRS tax formulas</p>
             </div>
-            <span>Vestly Equity Intelligence</span>
           </div>
-          <p className="text-slate-400 leading-relaxed text-xs max-w-md">
-            Engineered to empower employees with institutional-grade equity modeling, 
-            vesting schedules, Alternative Minimum Tax (AMT) forecasting, and actionable compliance workflows.
+
+          {/* Column 1: Product */}
+          <div className="space-y-2">
+            <h4 className="text-[11px] font-mono uppercase tracking-wider text-muted font-semibold">
+              Product
+            </h4>
+            <ul className="space-y-1.5 text-xs">
+              {productLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-muted hover:text-ink transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Column 2: Research */}
+          <div className="space-y-2">
+            <h4 className="text-[11px] font-mono uppercase tracking-wider text-muted font-semibold">
+              Research
+            </h4>
+            <ul className="space-y-1.5 text-xs">
+              {researchLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-muted hover:text-ink transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Column 3: Learn */}
+          <div className="space-y-2">
+            <h4 className="text-[11px] font-mono uppercase tracking-wider text-muted font-semibold">
+              Learn
+            </h4>
+            <ul className="space-y-1.5 text-xs">
+              {learnLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-muted hover:text-ink transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Disclaimer & Bottom Row */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-[11px] text-muted">
+          <p className="leading-relaxed max-w-3xl">
+            <strong className="text-ink font-semibold">Notice:</strong> Vestly provides mathematical estimates for educational and scenario planning purposes only. It does not constitute legal, tax, or investment advice. Always consult a certified CPA or tax attorney before exercising options or making tax elections.
           </p>
-          <div className="flex items-center gap-2 text-[11px] text-emerald-400/90 font-mono">
-            <Shield className="w-3.5 h-3.5 shrink-0" />
-            <span>Encrypted local session • Zero data brokering • Open calculations</span>
+          <div className="flex items-center gap-3 shrink-0 font-mono text-[10px]">
+            <span>Vestly v1.0.0</span>
+            <span>·</span>
+            <span>The Ledger</span>
           </div>
         </div>
-
-        <div>
-          <h4 className="text-slate-200 font-semibold text-xs uppercase tracking-wider mb-3">
-            Financial Education
-          </h4>
-          <ul className="space-y-2">
-            <li>
-              <a href="/learn#esop-basics-101" className="hover:text-emerald-400 transition-colors">
-                Stock Options 101
-              </a>
-            </li>
-            <li>
-              <a href="/learn#iso-vs-nso-vs-rsu" className="hover:text-emerald-400 transition-colors">
-                ISO vs NSO vs RSU Comparison
-              </a>
-            </li>
-            <li>
-              <a href="/learn#amt-explained-simply" className="hover:text-emerald-400 transition-colors">
-                Alternative Minimum Tax (AMT)
-              </a>
-            </li>
-            <li>
-              <a href="/learn#early-exercise-83b" className="hover:text-emerald-400 transition-colors">
-                Section 83(b) Election Filing
-              </a>
-            </li>
-            <li>
-              <a href="/learn#glossary" className="hover:text-emerald-400 transition-colors">
-                Equity Terminology Glossary
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-slate-200 font-semibold text-xs uppercase tracking-wider mb-3">
-            Regulatory & APIs
-          </h4>
-          <ul className="space-y-2 text-slate-400">
-            <li className="flex items-center gap-1">
-              <span>Market Data: Finnhub API</span>
-              <span className="text-[10px] text-slate-500">(60/min free)</span>
-            </li>
-            <li className="flex items-center gap-1">
-              <span>Fundamentals: Alpha Vantage</span>
-              <span className="text-[10px] text-slate-500">(25/day free)</span>
-            </li>
-            <li>
-              <a 
-                href="https://www.irs.gov/forms-pubs/about-form-8801" 
-                target="_blank" 
-                rel="noreferrer"
-                className="hover:text-emerald-400 flex items-center gap-1 transition-colors"
-              >
-                <span>IRS Form 8801 (AMT Credit)</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </li>
-            <li>
-              <a 
-                href="https://www.irs.gov/pub/irs-drop/rr-05-48.pdf" 
-                target="_blank" 
-                rel="noreferrer"
-                className="hover:text-emerald-400 flex items-center gap-1 transition-colors"
-              >
-                <span>IRC Section 83(b) Rules</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto pt-6 border-t border-slate-800 text-[11px] text-slate-400 flex flex-col md:flex-row items-center justify-between gap-4">
-        <p>
-          © {new Date().getFullYear()} Vestly. Built for startup & corporate equity compensation holders.
-        </p>
-        <p className="text-center md:text-right max-w-xl text-[10px] text-slate-400 leading-normal">
-          Not licensed investment or tax advice. Market quotes may be delayed. Pre-IPO valuation figures reflect known secondary/409A milestones.
-        </p>
       </div>
     </footer>
   );
 }
-
