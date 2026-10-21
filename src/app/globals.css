@@ -3,54 +3,78 @@
 @tailwind utilities;
 
 :root {
-  --background: #090d16;
-  --foreground: #f8fafc;
+  --paper: #F7F4EE;
+  --surface: #FFFFFF;
+  --sunk: #EFEBE2;
+  --rule: #DDD7CB;
+  --ink: #1A1814;
+  --muted: #5B564C;
+  --accent: #1F5A44;
+  --accent-contrast: #FFFFFF;
+  --gain: #1B6B47;
+  --loss: #A63D2F;
+  --warn: #9A4A12;
+  --info: #2D4A6B;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
+[data-theme="dark"] {
+  --paper: #14120F;
+  --surface: #1C1A16;
+  --sunk: #0F0E0B;
+  --rule: #2E2A23;
+  --ink: #EDE8DD;
+  --muted: #A59E90;
+  --accent: #86C3A4;
+  --accent-contrast: #0F0E0B;
+  --gain: #7CC49B;
+  --loss: #E58A7B;
+  --warn: #E0A15C;
+  --info: #8FB0D6;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  color: var(--ink);
+  background-color: var(--paper);
+  font-family: var(--font-ibm-plex-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
 
-/* Custom dark sleek scrollbar */
+/* Hairline borders and tabular figures */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom quiet scrollbar matching paper and rule */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b1120;
+  background: var(--sunk);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 9999px;
+  background: var(--rule);
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--muted);
 }
 
-/* Print optimizations for Advisor Reports */
+/* Print optimizations forced to light paper theme */
 @media print {
-  header, nav, footer, button, .no-print {
-    display: none !important;
-  }
   body {
-    background: #ffffff !important;
-    color: #000000 !important;
+    background-color: #F7F4EE !important;
+    color: #1A1814 !important;
     padding: 0 !important;
   }
-  .print-page {
-    background: #ffffff !important;
-    color: #000000 !important;
-    box-shadow: none !important;
-    border: none !important;
-    padding: 0 !important;
-    max-width: 100% !important;
-  }
-  .print-page * {
-    color: #000000 !important;
-    border-color: #e2e8f0 !important;
-    background-color: transparent !important;
+  .no-print {
+    display: none !important;
   }
 }

@@ -10,7 +10,9 @@
     "test": "vitest run",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "prisma:seed": "node prisma/seed.js"
+    "prisma:seed": "node prisma/seed.js",
+    "check:copy": "node scripts/check-copy.mjs",
+    "check:style": "node scripts/check-style.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",

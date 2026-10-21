@@ -5,7 +5,7 @@
 | Phase | Name | Weight | Cumulative | Items Done | Total Items | Phase % | Weighted % | Status |
 |---|---|---|---|---|---|---|---|---|
 | P0 | Safety Net and Prerequisites | 5% | 5% | 11 | 11 | 100% | 5.0% | COMPLETE |
-| P1 | Design System | 10% | 15% | 0 | 8 | 0% | 0.0% | Not Started |
+| P1 | Design System | 10% | 15% | 8 | 8 | 100% | 10.0% | COMPLETE |
 | P2 | App Shell, Navigation and Flow | 12% | 27% | 0 | 10 | 0% | 0.0% | Not Started |
 | P3 | Landing and Auth | 8% | 35% | 0 | 9 | 0% | 0.0% | Not Started |
 | P4 | Overview (Dashboard) | 9% | 44% | 0 | 12 | 0% | 0.0% | Not Started |
@@ -15,7 +15,7 @@
 | P8 | Research | 12% | 87% | 0 | 9 | 0% | 0.0% | Not Started |
 | P9 | Learn Hub | 8% | 95% | 0 | 8 | 0% | 0.0% | Not Started |
 | P10 | Polish, Accessibility, Final Checks | 5% | 100% | 0 | 9 | 0% | 0.0% | Not Started |
-| **Total** | | **100%** | | | | | **5%** | |
+| **Total** | | **100%** | | | | | **15%** | |
 
 ---
 
@@ -35,14 +35,14 @@
 - [x] 0.11 Prisma schema & seed enhancements: Add `User.filingStatus`, `User.stateCode`, `User.annualIncome`, `WatchlistItem.note`, `SavedScenario`, `LearnProgress`. Run `npx prisma db push` and update seed.
 
 ### Phase 1: Design System (Weight 10%)
-- [ ] 1.1 Typography and CSS variables for both themes per C1/C2; no-flash inline theme script; `tailwind.config.ts` updated; old colors and custom shadows removed.
-- [ ] 1.2 UI Primitives in `src/components/ui/` (Button, LinkButton, Field, Input, Select, Textarea, Checkbox, Switch, Tabs, Table, Badge, Callout, Dialog, Popover, Tooltip, Skeleton, EmptyState, Stat, Stepper, ProgressBar, KeyValueList, Section, PageHeader, Footnotes).
-- [ ] 1.3 `Figure` component (number + footnote marker + "How is this calculated?" popover), `Money`, `Units`, `DateText`.
-- [ ] 1.4 Toast system: `ToastProvider` + `useToast()`; replace `alert()`/`confirm()`.
-- [ ] 1.5 Flat chart theme `src/components/charts/theme.ts` reading CSS variables, today marker, accessible text summary.
-- [ ] 1.6 `Logo` SVG component (stepped line + wordmark) and `app/icon.svg`, zero Sparkles.
-- [ ] 1.7 Dev-only route `/dev/styleguide` showcasing all primitives in light/dark with contrast checks.
-- [ ] 1.8 `docs/COPY_GUIDE.md` and check scripts (`check-copy.mjs`, `check-style.mjs`), `npm run check:copy`, `npm run check:style`.
+- [x] 1.1 Typography and CSS variables for both themes per C1/C2; no-flash inline theme script; `tailwind.config.ts` updated; old colors and custom shadows removed.
+- [x] 1.2 UI Primitives in `src/components/ui/` (Button, LinkButton, Field, Input, Select, Textarea, Checkbox, Switch, Tabs, Table, Badge, Callout, Dialog, Popover, Tooltip, Skeleton, EmptyState, Stat, Stepper, ProgressBar, KeyValueList, Section, PageHeader, Footnotes).
+- [x] 1.3 `Figure` component (number + footnote marker + "How is this calculated?" popover), `Money`, `Units`, `DateText`.
+- [x] 1.4 Toast system: `ToastProvider` + `useToast()`; replace `alert()`/`confirm()`.
+- [x] 1.5 Flat chart theme `src/components/charts/theme.tsx` reading CSS variables, today marker, accessible text summary.
+- [x] 1.6 `Logo` SVG component (stepped line + wordmark) and `app/icon.svg`, zero Sparkles.
+- [x] 1.7 Dev-only route `/dev/styleguide` showcasing all primitives in light/dark with contrast checks.
+- [x] 1.8 `docs/COPY_GUIDE.md` and check scripts (`check-copy.mjs`, `check-style.mjs`), `npm run check:copy`, `npm run check:style`.
 
 ### Phase 2: App Shell, Navigation and Flow (Weight 12%)
 - [ ] 2.1 Route groups with `git mv`: `(marketing)`, `(auth)`, `(app)`, `(content)` with dedicated layouts.
