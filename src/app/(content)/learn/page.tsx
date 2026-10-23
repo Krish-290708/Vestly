@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { 
   BookOpen, 
   Search, 
@@ -171,13 +172,13 @@ export default function LearnPage() {
               <span className="text-xs text-slate-400">
                 Want to calculate this for your own options?
               </span>
-              <a
+              <Link
                 href="/calculator"
                 className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-colors"
               >
                 <span>Launch Calculator</span>
                 <ArrowRight className="w-3.5 h-3.5" />
-              </a>
+              </Link>
             </div>
 
           </div>

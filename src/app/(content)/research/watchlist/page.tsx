@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   Bookmark, 
   Trash2, 
@@ -95,13 +96,13 @@ export default function WatchlistPage() {
               </div>
 
               <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-                <a
+                <Link
                   href={`/research/companies?q=${encodeURIComponent(company.name)}`}
                   className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
                 >
                   <span>View Valuation History</span>
                   <ArrowRight className="w-3.5 h-3.5" />
-                </a>
+                </Link>
 
                 {company.ticker && (
                   <span className="font-mono text-[11px] font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
@@ -123,12 +124,12 @@ export default function WatchlistPage() {
               Browse the Company Explorer to follow companies and track valuation trends in one place.
             </p>
           </div>
-          <a
+          <Link
             href="/research/companies"
             className="inline-block px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-colors"
           >
             Explore Companies
-          </a>
+          </Link>
         </div>
       )}
     </div>

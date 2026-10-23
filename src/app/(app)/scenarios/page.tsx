@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { 
   GitFork, 
   AlertTriangle, 
@@ -14,8 +16,12 @@ import { modelScenarios, calculate83bAnalysis } from '@/lib/calculations/scenari
 import { COMPLIANCE_DISCLAIMER } from '@/lib/calculations/taxes';
 import Section83bModal from '@/components/scenarios/Section83bModal';
 import TenderOfferModeler from '@/components/scenarios/TenderOfferModeler';
+import { useGrant } from '@/contexts/GrantContext';
 
 export default function ScenariosPage() {
+  const searchParams = useSearchParams();
+  const requestedGrantId = searchParams.get('grant') || searchParams.get('grantId');
+  const { setSelectedGrantId: setContextGrantId } = useGrant();
   const [grants, setGrants] = useState<any[]>([]);
   const [selectedGrant, setSelectedGrant] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'STRATEGY' | 'TENDER'>('STRATEGY');
@@ -36,7 +42,7 @@ export default function ScenariosPage() {
       .then(data => {
         if (data?.grants && data.grants.length > 0) {
           setGrants(data.grants);
-          const first = data.grants[0];
+          const first = data.grants.find((grant: any) => grant.id === requestedGrantId) || data.grants[0];
           setSelectedGrant(first);
           setUnits(first.vestedUnits || first.unitsGranted);
           setStrikePrice(first.strikePrice);
@@ -47,10 +53,11 @@ export default function ScenariosPage() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [requestedGrantId]);
 
   const handleGrantSelect = (g: any) => {
     setSelectedGrant(g);
+    setContextGrantId(g.id);
     setUnits(g.vestedUnits || g.unitsGranted);
     setStrikePrice(g.strikePrice);
     const fmv = g.company?.latestFmvPerShare || 25.00;
@@ -290,12 +297,12 @@ export default function ScenariosPage() {
                   </div>
 
                   <div className="pt-2">
-                    <a
-                      href={`/calculator?grantId=${selectedGrant?.id || ''}`}
+                    <Link
+                      href={`/calculator?grant=${selectedGrant?.id || ''}`}
                       className="w-full py-2 px-3 rounded-lg text-xs font-bold text-center block bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
                     >
                       Adjust Assumptions
-                    </a>
+                    </Link>
                   </div>
                 </div>
               ))}

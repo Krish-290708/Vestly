@@ -125,8 +125,9 @@ export function GrantProvider({ children }: { children: React.ReactNode }) {
     (basePath: string, grantId?: string | null) => {
       const targetId = grantId !== undefined ? grantId : selectedGrantId;
       if (!targetId) return basePath;
-      const separator = basePath.includes('?') ? '&' : '?';
-      return `${basePath}${separator}grant=${encodeURIComponent(targetId)}`;
+      const [pathAndQuery, hash] = basePath.split('#', 2);
+      const separator = pathAndQuery.includes('?') ? '&' : '?';
+      return `${pathAndQuery}${separator}grant=${encodeURIComponent(targetId)}${hash ? `#${hash}` : ''}`;
     },
     [selectedGrantId]
   );

@@ -623,7 +623,7 @@ export default function SettingsPage() {
       )}
 
       {/* Suggested next steps */}
-      <NextSteps journey="J5" title="What to do next" />
+      <NextSteps preset="J5" title="What to do next" />
     </div>
   );
 }

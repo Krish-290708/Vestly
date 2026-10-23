@@ -156,12 +156,12 @@ export default function DashboardPage() {
                     Due: {new Date(task.dueDate).toLocaleDateString()} • {task.grant?.company?.name || 'General'}
                   </div>
                 </div>
-                <a
+                <Link
                   href="/actions"
                   className="px-2.5 py-1 text-[11px] font-bold rounded bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shrink-0"
                 >
                   Review
-                </a>
+                </Link>
               </div>
             ))}
           </div>
@@ -278,19 +278,19 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-2">
-            <a
+            <Link
               href="/calculator"
               className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center gap-1.5 transition-colors shadow-sm"
             >
               <span>Launch Equity Calculator</span>
               <ArrowUpRight className="w-4 h-4" />
-            </a>
-            <a
+            </Link>
+            <Link
               href="/scenarios"
               className="w-full py-2 px-4 rounded-xl font-medium text-xs bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 flex items-center justify-center gap-1.5 transition-colors"
             >
               <span>Explore 83(b) & Scenarios</span>
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -370,12 +370,12 @@ export default function DashboardPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <a
-                        href={`/calculator?grantId=${grant.id}`}
+                      <Link
+                        href={`/calculator?grant=${grant.id}`}
                         className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-md transition-colors"
                       >
                         Model Tax
-                      </a>
+                      </Link>
                     </td>
                   </tr>
                 ))}

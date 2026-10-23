@@ -1,15 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Calculator } from 'lucide-react';
 import { calculateEquityOutcome } from '@/lib/calculations/taxes';
 import { GrantType, TaxBracketSettings } from '@/types';
 import TaxBreakdownCard from '@/components/calculator/TaxBreakdownCard';
+import { useGrant } from '@/contexts/GrantContext';
 
 function CalculatorContent() {
   const searchParams = useSearchParams();
-  const grantIdParam = searchParams.get('grantId');
+  const grantIdParam = searchParams.get('grant') || searchParams.get('grantId');
+  const { setSelectedGrantId: setContextGrantId } = useGrant();
 
   const [grants, setGrants] = useState<any[]>([]);
   const [selectedGrantId, setSelectedGrantId] = useState<string>('custom');
@@ -40,6 +42,16 @@ function CalculatorContent() {
     { label: 'Massachusetts (5.0%)', rate: 0.05 },
   ];
 
+  const selectGrant = useCallback((grant: any) => {
+    setSelectedGrantId(grant.id);
+    setContextGrantId(grant.id);
+    setGrantType(grant.grantType);
+    setUnitsToExercise(grant.vestedUnits || grant.unitsGranted);
+    setStrikePrice(grant.strikePrice);
+    setCurrentFmv(grant.company?.latestFmvPerShare || 25.00);
+    setAssumedExitPrice(Math.round((grant.company?.latestFmvPerShare || 25.00) * 2.5));
+  }, [setContextGrantId]);
+
   useEffect(() => {
     fetch('/api/grants')
       .then(res => res.ok ? res.json() : null)
@@ -57,16 +69,7 @@ function CalculatorContent() {
         }
       })
       .catch(() => {});
-  }, [grantIdParam]);
-
-  const selectGrant = (grant: any) => {
-    setSelectedGrantId(grant.id);
-    setGrantType(grant.grantType);
-    setUnitsToExercise(grant.vestedUnits || grant.unitsGranted);
-    setStrikePrice(grant.strikePrice);
-    setCurrentFmv(grant.company?.latestFmvPerShare || 25.00);
-    setAssumedExitPrice(Math.round((grant.company?.latestFmvPerShare || 25.00) * 2.5));
-  };
+  }, [grantIdParam, selectGrant]);
 
   // Run calculation live
   const result = calculateEquityOutcome({

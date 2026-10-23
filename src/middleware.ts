@@ -17,29 +17,49 @@ const PROTECTED_PREFIXES = [
 // Auth pages where logged-in users should be redirected away
 const AUTH_ROUTES = ['/login', '/register'];
 
-function isTokenValid(token: string | undefined): boolean {
+const JWT_SECRET = process.env.JWT_SECRET || 'vestly_dev_secret_key_change_in_production';
+
+function base64UrlToBytes(value: string): ArrayBuffer {
+  const binary = atob(value.replace(/-/g, '+').replace(/_/g, '/'));
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  return bytes.buffer as ArrayBuffer;
+}
+
+async function isTokenValid(token: string | undefined): Promise<boolean> {
   if (!token) return false;
+
   try {
-    // Decode JWT payload (middle segment) without heavy crypto in Edge runtime
     const parts = token.split('.');
     if (parts.length !== 3) return false;
-    const payloadJson = Buffer.from(parts[1], 'base64').toString('utf8');
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(JWT_SECRET),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+    const signatureIsValid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      base64UrlToBytes(parts[2]),
+      new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
+    );
+    if (!signatureIsValid) return false;
+
+    const payloadJson = new TextDecoder().decode(base64UrlToBytes(parts[1]));
     const payload = JSON.parse(payloadJson);
-    if (!payload.userId) return false;
-    // Check expiration if present
-    if (payload.exp && Date.now() >= payload.exp * 1000) {
-      return false;
-    }
-    return true;
+
+    return Boolean(payload.userId) && (!payload.exp || Date.now() < payload.exp * 1000);
   } catch {
     return false;
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const authenticated = isTokenValid(token);
+  const authenticated = await isTokenValid(token);
 
   // 1. Check protected routes
   const isProtected = PROTECTED_PREFIXES.some(

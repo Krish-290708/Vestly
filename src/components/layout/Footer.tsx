@@ -1,8 +1,23 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
+import { date } from '@/lib/format';
 
 export default function Footer() {
+  const [marketMeta, setMarketMeta] = useState<{ source?: string; lastUpdated?: string } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/market/indices')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data?.lastUpdated) {
+          setMarketMeta({ source: data.source, lastUpdated: data.lastUpdated });
+        }
+      })
+      .catch(() => {});
+  }, []);
   const productLinks = [
     { label: 'Overview', href: '/dashboard' },
     { label: 'Grants', href: '/grants' },
@@ -42,8 +57,9 @@ export default function Footer() {
               for employees holding stock options, RSUs, and ESPPs.
             </p>
             <div className="text-[11px] font-mono text-muted space-y-0.5">
-              <p>Data source: Finnhub Market API (end-of-day quotes)</p>
-              <p>Valuation models: Deterministic IRS tax formulas</p>
+              <p>Market data: {marketMeta?.source || 'refreshing source information'}</p>
+              <p>Last refreshed: {marketMeta?.lastUpdated ? date(marketMeta.lastUpdated) : 'not yet available'}</p>
+              <p>Calculations: estimates based on the assumptions you enter</p>
             </div>
           </div>
 

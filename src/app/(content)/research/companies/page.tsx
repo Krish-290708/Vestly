@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   Building2, 
   Search, 
@@ -205,13 +206,13 @@ export default function CompaniesPage() {
                       You have recorded stock option grants for <strong>{selectedCompany.name}</strong>.
                     </span>
                   </div>
-                  <a
+                  <Link
                     href="/dashboard"
                     className="font-bold text-emerald-300 hover:text-emerald-200 hover:underline flex items-center gap-1"
                   >
                     <span>View Your Vesting</span>
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </a>
+                  </Link>
                 </div>
               )}
 

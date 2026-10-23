@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Sparkles, 
@@ -67,12 +68,12 @@ export default function LandingPage() {
             )}
           </button>
 
-          <a
+          <Link
             href="/login"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-sm bg-slate-900 hover:bg-slate-850 text-white border border-slate-700 shadow-xs transition-colors"
           >
             <span>Sign In to Your Grants</span>
-          </a>
+          </Link>
         </div>
 
         {/* Trust Badges */}
@@ -145,18 +146,18 @@ export default function LandingPage() {
             Understand the financial context behind your employer's valuation. Explore private company 409As, funding rounds, live market indices via Finnhub, and short, skimmable explainer articles covering everything from AMT to secondary tender offers.
           </p>
           <div className="pt-3 flex flex-wrap gap-3">
-            <a
+            <Link
               href="/research/market"
               className="px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors"
             >
               Explore Market Overview
-            </a>
-            <a
+            </Link>
+            <Link
               href="/learn"
               className="px-5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition-colors"
             >
               Browse Equity Guides & Glossary
-            </a>
+            </Link>
           </div>
         </div>
       </section>

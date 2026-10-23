@@ -119,25 +119,20 @@ const PRESET_JOURNEYS: Record<JourneyKey, NextStepItem[]> = {
 
 export interface NextStepsProps {
   steps?: NextStepItem[];
-  journey?: JourneyKey;
+  preset?: JourneyKey;
   title?: string;
   className?: string;
 }
 
 export function NextSteps({
   steps,
-  journey = 'J2',
+  preset = 'J2',
   title = 'What most people do next',
   className = '',
 }: NextStepsProps) {
-  let grantCtx: ReturnType<typeof useGrant> | null = null;
-  try {
-    grantCtx = useGrant();
-  } catch {
-    // In public shell without GrantContext
-  }
+  const grantCtx = useGrant();
 
-  const items = steps || PRESET_JOURNEYS[journey] || PRESET_JOURNEYS.J2;
+  const items = steps || PRESET_JOURNEYS[preset] || PRESET_JOURNEYS.J2;
 
   return (
     <section

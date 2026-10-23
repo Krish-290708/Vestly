@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -152,12 +153,12 @@ export default function MarketOverviewPage() {
           </div>
 
           <div className="pt-2">
-            <a
+            <Link
               href="/research/companies"
               className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 block text-center transition-colors"
             >
               Explore Company Valuations & 409As
-            </a>
+            </Link>
           </div>
         </div>
 

@@ -88,17 +88,10 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     }
   }, [isOpen]);
 
-  // Handle Ctrl+K / Cmd+K global keybind
+  // Escape remains local to the palette; the shell owns the Ctrl/Cmd+K shortcut.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        if (isOpen) {
-          onClose();
-        } else {
-          // Open handled by parent or custom event
-        }
-      } else if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape' && isOpen) {
         e.preventDefault();
         onClose();
       }
@@ -163,7 +156,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   }, [query]);
 
   // Define static action items
-  const actionItems: PaletteItem[] = [
+  const actionItems = React.useMemo<PaletteItem[]>(() => [
     {
       id: 'a-add-grant',
       category: 'Actions',
@@ -201,7 +194,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       },
       icon: SunMoon,
     },
-  ];
+  ], []);
 
   // Filter items based on query
   const filteredItems: PaletteItem[] = React.useMemo(() => {
@@ -227,7 +220,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       ...dynamicCompanies,
       ...matchedLearn,
     ];
-  }, [query, recentItems, dynamicGrants, dynamicCompanies]);
+  }, [query, recentItems, dynamicGrants, dynamicCompanies, actionItems]);
 
   // Reset selected index when results change
   useEffect(() => {

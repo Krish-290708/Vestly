@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   Layers, 
   PlusCircle, 
@@ -247,12 +248,12 @@ export default function GrantsPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-2">
-                  <a
-                    href={`/calculator?grantId=${grant.id}`}
+                  <Link
+                    href={`/calculator?grant=${grant.id}`}
                     className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors shadow-xs"
                   >
                     Model Tax
-                  </a>
+                  </Link>
                   <button
                     onClick={() => setExpandedGrantId(isExpanded ? null : grant.id)}
                     className="p-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
