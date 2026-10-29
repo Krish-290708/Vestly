@@ -6,7 +6,7 @@
 |---|---|---|---|---|---|---|---|---|
 | P0 | Safety Net and Prerequisites | 5% | 5% | 11 | 11 | 100% | 5.0% | COMPLETE |
 | P1 | Design System | 10% | 15% | 8 | 8 | 100% | 10.0% | COMPLETE |
-| P2 | App Shell, Navigation and Flow | 12% | 27% | 0 | 10 | 0% | 0.0% | Not Started |
+| P2 | App Shell, Navigation and Flow | 12% | 27% | 10 | 10 | 100% | 12.0% | COMPLETE |
 | P3 | Landing and Auth | 8% | 35% | 0 | 9 | 0% | 0.0% | Not Started |
 | P4 | Overview (Dashboard) | 9% | 44% | 0 | 12 | 0% | 0.0% | Not Started |
 | P5 | Grants | 11% | 55% | 0 | 10 | 0% | 0.0% | Not Started |
@@ -15,7 +15,7 @@
 | P8 | Research | 12% | 87% | 0 | 9 | 0% | 0.0% | Not Started |
 | P9 | Learn Hub | 8% | 95% | 0 | 8 | 0% | 0.0% | Not Started |
 | P10 | Polish, Accessibility, Final Checks | 5% | 100% | 0 | 9 | 0% | 0.0% | Not Started |
-| **Total** | | **100%** | | | | | **15%** | |
+| **Total** | | **100%** | | | | | **27%** | |
 
 ---
 
@@ -45,16 +45,16 @@
 - [x] 1.8 `docs/COPY_GUIDE.md` and check scripts (`check-copy.mjs`, `check-style.mjs`), `npm run check:copy`, `npm run check:style`.
 
 ### Phase 2: App Shell, Navigation and Flow (Weight 12%)
-- [ ] 2.1 Route groups with `git mv`: `(marketing)`, `(auth)`, `(app)`, `(content)` with dedicated layouts.
-- [ ] 2.2 `middleware.ts` for route protection and `?next=` handling.
-- [ ] 2.3 Navigation: replace internal `<a href>` with `next/link`, external links with `rel="noopener noreferrer"`.
-- [ ] 2.4 Signed-in shell with collapsible sidebar (three groups), top bar, breadcrumbs, command palette trigger, theme toggle, mobile bottom bar.
-- [ ] 2.5 Command palette (Ctrl/Cmd+K) with search API `GET /api/search?q=`.
-- [ ] 2.6 `GrantContext` + `?grant=` context persistence.
-- [ ] 2.7 `NextSteps` component wiring journey links.
-- [ ] 2.8 Segment `loading.tsx` skeletons, `error.tsx`, `not-found.tsx`.
-- [ ] 2.9 New structured footer (Product, Research, Learn sitemap, refresh timestamp, disclaimer).
-- [ ] 2.10 Settings page `/settings` with Profile, Tax defaults, Notifications, Appearance, Data export/deletion.
+- [x] 2.1 Route groups with `git mv`: `(marketing)`, `(auth)`, `(app)`, `(content)` with dedicated layouts.
+- [x] 2.2 `middleware.ts` for route protection and `?next=` handling.
+- [x] 2.3 Navigation: replace internal `<a href>` with `next/link`, external links with `rel="noopener noreferrer"`.
+- [x] 2.4 Signed-in shell with collapsible sidebar (three groups), top bar, breadcrumbs, command palette trigger, theme toggle, mobile bottom bar.
+- [x] 2.5 Command palette (Ctrl/Cmd+K) with search API `GET /api/search?q=`.
+- [x] 2.6 `GrantContext` + `?grant=` context persistence.
+- [x] 2.7 `NextSteps` component wiring journey links.
+- [x] 2.8 Segment `loading.tsx` skeletons, `error.tsx`, `not-found.tsx`.
+- [x] 2.9 New structured footer (Product, Research, Learn sitemap, refresh timestamp, disclaimer).
+- [x] 2.10 Settings page `/settings` with Profile, Tax defaults, Notifications, Appearance, Data export/deletion.
 
 ### Phase 3: Landing and Auth (Weight 8%)
 - [ ] 3.1 Hero with interactive "Your grant" live sliders.
@@ -163,5 +163,52 @@
 ---
 
 ## Latest Report
-*(Empty until Phase 0 completion)*
+
+### Phase 2: App Shell, Navigation and Flow
+- **Checklist:** 10/10 items done in this phase (100%)
+- **Overall progress:** 27% complete
+- **Progress bar:** `[█████░░░░░░░░░░░░░░░] 27%` (29/108 items total)
+
+**DONE:**
+- 2.1 Route groups: `(marketing)`, `(auth)`, `(app)`, `(content)` with dedicated layouts
+- 2.2 Edge-compatible middleware with JWT verification, route protection, `?next=` redirect
+- 2.3 Navigation: internal `<a href>` converted to `next/link` across entire app; external links with `rel="noopener noreferrer"`
+- 2.4 Signed-in shell: `AppSidebar` (collapsible, 3 nav groups), `AppTopBar` (breadcrumbs, theme toggle, profile menu), `MobileNav` drawer & bottom bar
+- 2.5 Command palette: `Ctrl/Cmd+K` fast modal with fuzzy search API `GET /api/search?q=`
+- 2.6 `GrantContext`: global grant selector with `?grant=` URL persistence and tax defaults integration
+- 2.7 `NextSteps`: journey cards component supporting J1-J5 presets
+- 2.8 Segment loading skeletons, error boundaries, and Ledger-styled not-found
+- 2.9 Structured footer: Product/Research/Learn sitemap, timestamp, regulatory disclaimer
+- 2.10 Settings page `/settings`: Profile, Tax defaults, Notifications, Appearance, JSON/CSV export, account deletion
+
+**NOT DONE:**
+- None for Phase 2
+
+**CHANGED:**
+- 33 files changed, +3,580 / -530 lines
+- 0 new runtime dependencies added
+- 1 new test file: `tests/shell-settings.test.ts` (5 tests)
+
+**VERIFIED:**
+- tests: 26 passed, 0 failed (3 test files)
+- lint: 0 errors
+- tsc: clean, 0 errors
+- build: clean, all routes prerendered / dynamic matching specifications
+
+**STYLE GATE:**
+- Sparkles 8 | bg-gradient 2 | rounded-2xl/3xl 54 | slate- 850 | emerald- 278 | emoji 1
+
+**COPY GATE:**
+- banned words found: 4 (0 in new shell/settings code; remaining 4 in legacy unmigrated pages)
+
+**HOW TO SEE IT:**
+- Run `npm run dev` (starts on port 3000)
+- Log in with demo account (`user@vestly.local` / `vestly123`) or visit `/dashboard`
+- Check collapsible sidebar, breadcrumbs in top bar, and theme toggle (light/dark)
+- Press `Ctrl+K` (or `Cmd+K`) to open the Command Palette and search for grants, companies, or pages
+- Visit `/settings` to view and update Tax Defaults, notifications, appearance, or export JSON/CSV data
+
+**NEXT:**
+- Phase 3: Landing and Auth (Weight 8%, cumulative 35%)
+- 9 landing sections with live sliders, timeline, comparison table, worked examples, and redesigned auth pages
 
