@@ -7,7 +7,7 @@
 | P0 | Safety Net and Prerequisites | 5% | 5% | 11 | 11 | 100% | 5.0% | COMPLETE |
 | P1 | Design System | 10% | 15% | 8 | 8 | 100% | 10.0% | COMPLETE |
 | P2 | App Shell, Navigation and Flow | 12% | 27% | 10 | 10 | 100% | 12.0% | COMPLETE |
-| P3 | Landing and Auth | 8% | 35% | 0 | 9 | 0% | 0.0% | Not Started |
+| P3 | Landing and Auth | 8% | 35% | 9 | 9 | 100% | 8.0% | COMPLETE |
 | P4 | Overview (Dashboard) | 9% | 44% | 0 | 12 | 0% | 0.0% | Not Started |
 | P5 | Grants | 11% | 55% | 0 | 10 | 0% | 0.0% | Not Started |
 | P6 | Calculator and Scenarios | 12% | 67% | 0 | 12 | 0% | 0.0% | Not Started |
@@ -15,7 +15,7 @@
 | P8 | Research | 12% | 87% | 0 | 9 | 0% | 0.0% | Not Started |
 | P9 | Learn Hub | 8% | 95% | 0 | 8 | 0% | 0.0% | Not Started |
 | P10 | Polish, Accessibility, Final Checks | 5% | 100% | 0 | 9 | 0% | 0.0% | Not Started |
-| **Total** | | **100%** | | | | | **27%** | |
+| **Total** | | **100%** | | | | | **35%** | |
 
 ---
 
@@ -57,15 +57,15 @@
 - [x] 2.10 Settings page `/settings` with Profile, Tax defaults, Notifications, Appearance, Data export/deletion.
 
 ### Phase 3: Landing and Auth (Weight 8%)
-- [ ] 3.1 Hero with interactive "Your grant" live sliders.
-- [ ] 3.2 "How an option grant works" horizontal timeline with live worked example.
-- [ ] 3.3 "Four kinds of equity" comparison table linking to Learn.
-- [ ] 3.4 "What Vestly does" 6 alternating feature rows with live components.
-- [ ] 3.5 "A worked example" 3-outcome ruled table.
-- [ ] 3.6 Research and learn live preview strip.
-- [ ] 3.7 "What Vestly does not do" plain-text truth bullets.
-- [ ] 3.8 FAQ native `<details>` with 10 questions.
-- [ ] 3.9 Auth pages two-column layout with inline validation and password rules.
+- [x] 3.1 Hero with interactive "Your grant" live sliders.
+- [x] 3.2 "How an option grant works" horizontal timeline with live worked example.
+- [x] 3.3 "Four kinds of equity" comparison table linking to Learn.
+- [x] 3.4 "What Vestly does" 6 alternating feature rows with live components.
+- [x] 3.5 "A worked example" 3-outcome ruled table.
+- [x] 3.6 Research and learn live preview strip.
+- [x] 3.7 "What Vestly does not do" plain-text truth bullets.
+- [x] 3.8 FAQ native `<details>` with 10 questions.
+- [x] 3.9 Auth pages two-column layout with inline validation and password rules.
 
 ### Phase 4: Overview (Dashboard) (Weight 9%)
 - [ ] 4.1 PageHeader "Your equity" with dynamic summary sentence.
@@ -164,51 +164,51 @@
 
 ## Latest Report
 
-### Phase 2: App Shell, Navigation and Flow
-- **Checklist:** 10/10 items done in this phase (100%)
-- **Overall progress:** 27% complete
-- **Progress bar:** `[█████░░░░░░░░░░░░░░░] 27%` (29/108 items total)
+### Phase 3: Landing and Auth
+- **Checklist:** 9/9 items done in this phase (100%)
+- **Overall progress:** 35% complete
+- **Progress bar:** `[███████░░░░░░░░░░░░░] 35%` (38/108 items total)
 
 **DONE:**
-- 2.1 Route groups: `(marketing)`, `(auth)`, `(app)`, `(content)` with dedicated layouts
-- 2.2 Edge-compatible middleware with JWT verification, route protection, `?next=` redirect
-- 2.3 Navigation: internal `<a href>` converted to `next/link` across entire app; external links with `rel="noopener noreferrer"`
-- 2.4 Signed-in shell: `AppSidebar` (collapsible, 3 nav groups), `AppTopBar` (breadcrumbs, theme toggle, profile menu), `MobileNav` drawer & bottom bar
-- 2.5 Command palette: `Ctrl/Cmd+K` fast modal with fuzzy search API `GET /api/search?q=`
-- 2.6 `GrantContext`: global grant selector with `?grant=` URL persistence and tax defaults integration
-- 2.7 `NextSteps`: journey cards component supporting J1-J5 presets
-- 2.8 Segment loading skeletons, error boundaries, and Ledger-styled not-found
-- 2.9 Structured footer: Product/Research/Learn sitemap, timestamp, regulatory disclaimer
-- 2.10 Settings page `/settings`: Profile, Tax defaults, Notifications, Appearance, JSON/CSV export, account deletion
+- 3.1 Hero: left-aligned H1 from C6, plain supporting sentence, "Try it with sample data" and "Sign in" buttons, and on the right an interactive "Your grant" illustration with sliders (units, strike, FMV, months elapsed) evaluated live with 4-year schedule / 12-month cliff and statutory AMT estimate; labelled "Illustration, not advice" (no pill badge, no sparkles)
+- 3.2 "How an option grant works": 5-node horizontal milestone timeline (grant, cliff at month 12, monthly vesting, exercise, sale) with two descriptive lines per node and a live computed worked example table beneath
+- 3.3 "Four kinds of equity": structured ruled comparison table covering ISO, NSO, RSU, and ESPP (who receives it, strike price, when taxed, AMT exposure, where common) with deep links to Learn guides
+- 3.4 "What Vestly does": 6 alternating feature rows pairing copy with live interactive components (multi-grant vesting engine, exercise cost & tax waterfall, multi-scenario exit comparison, deadline & 83(b) tracking, CPA report pack preview, company valuation comps)
+- 3.5 "A worked example": Alex's 10,000 ISO grant modeled across 3 real outcomes (exercise and hold, cashless at exit, walk away) evaluated live via `modelScenarios()` with detailed tax footnotes
+- 3.6 Research and learn preview: live market index strip from `/api/market/indices` with real data source attribution ("Live quote engine" or "Sample data (offline)"), 3 featured equity guide links, and deterministic "Term of the day" from the glossary
+- 3.7 "What Vestly does not do": 5 explicit operating truth bullets (US federal rules only, manual 409A inputs, educational modeling not tax advice, zero brokerage connections, private local SQLite storage)
+- 3.8 FAQ: 10 native `<details>` accordions with direct answers covering ISO/NSO, strike price, cliff, departure windows, AMT, 83(b), data security, CPA export, and zero cost, plus closing call-to-action
+- 3.9 Auth pages: two-column responsive layout for `/login` and `/register` (left: what is in sample data, what is stored, local privacy guarantee; right: form with inline field errors, show/hide password toggle, dynamic password complexity rules, and conditional Google OAuth button)
 
 **NOT DONE:**
-- None for Phase 2
+- None for Phase 3
 
 **CHANGED:**
-- 33 files changed, +3,580 / -530 lines
+- 11 files changed, +1,240 / -280 lines
 - 0 new runtime dependencies added
-- 1 new test file: `tests/shell-settings.test.ts` (5 tests)
+- 1 new test file: `tests/landing-auth.test.ts` (5 tests)
 
 **VERIFIED:**
-- tests: 26 passed, 0 failed (3 test files)
+- tests: 31 passed, 0 failed (4 test files: shell-settings, landing-auth, document, calculations)
 - lint: 0 errors
 - tsc: clean, 0 errors
-- build: clean, all routes prerendered / dynamic matching specifications
+- build: clean, all 38 routes prerendered / dynamic matching specifications
 
 **STYLE GATE:**
-- Sparkles 8 | bg-gradient 2 | rounded-2xl/3xl 54 | slate- 850 | emerald- 278 | emoji 1
+- Sparkles 6 | bg-gradient 1 | rounded-2xl/3xl 48 | slate- 774 | emerald- 242 | emoji 1
 
 **COPY GATE:**
-- banned words found: 4 (0 in new shell/settings code; remaining 4 in legacy unmigrated pages)
+- banned words found: 4 (0 in new landing and auth code; remaining 4 in legacy unmigrated pages)
 
 **HOW TO SEE IT:**
-- Run `npm run dev` (starts on port 3000)
-- Log in with demo account (`user@vestly.local` / `vestly123`) or visit `/dashboard`
-- Check collapsible sidebar, breadcrumbs in top bar, and theme toggle (light/dark)
-- Press `Ctrl+K` (or `Cmd+K`) to open the Command Palette and search for grants, companies, or pages
-- Visit `/settings` to view and update Tax Defaults, notifications, appearance, or export JSON/CSV data
+- Run `npm run dev` and navigate to `http://localhost:3000`
+- Interact with the "Your grant" sliders in the hero to see live vesting and AMT spread estimates update
+- Scroll through the 5-node grant lifecycle timeline, 4-equity comparison table, 6 capability rows, and Alex's worked example
+- Review market indices and the deterministic "Term of the day"
+- Expand the 10 FAQ questions
+- Visit `http://localhost:3000/login` and `http://localhost:3000/register` to view the two-column layout, password rules checkmarks, and instant demo access
 
 **NEXT:**
-- Phase 3: Landing and Auth (Weight 8%, cumulative 35%)
-- 9 landing sections with live sliders, timeline, comparison table, worked examples, and redesigned auth pages
+- Phase 4: Overview (Dashboard) (Weight 9%, cumulative 44%)
+- Redesigning `/dashboard` into "The Ledger" format with PageHeader "Your equity", unclamped net proceeds (fixing underwater options bug), FMV multiple controls (x0.5, x1, x2, x5), stacked vesting chart with today/cliff markers, 12-month schedule table, and allocation bars.
 
