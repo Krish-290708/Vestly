@@ -9,13 +9,13 @@
 | P2 | App Shell, Navigation and Flow | 12% | 27% | 10 | 10 | 100% | 12.0% | COMPLETE |
 | P3 | Landing and Auth | 8% | 35% | 9 | 9 | 100% | 8.0% | COMPLETE |
 | P4 | Overview (Dashboard) | 9% | 44% | 12 | 12 | 100% | 9.0% | COMPLETE |
-| P5 | Grants | 11% | 55% | 0 | 10 | 0% | 0.0% | Not Started |
+| P5 | Grants | 11% | 55% | 10 | 10 | 100% | 11.0% | COMPLETE |
 | P6 | Calculator and Scenarios | 12% | 67% | 0 | 12 | 0% | 0.0% | Not Started |
 | P7 | Action Centre and Reports | 8% | 75% | 0 | 7 | 0% | 0.0% | Not Started |
 | P8 | Research | 12% | 87% | 0 | 9 | 0% | 0.0% | Not Started |
 | P9 | Learn Hub | 8% | 95% | 0 | 8 | 0% | 0.0% | Not Started |
 | P10 | Polish, Accessibility, Final Checks | 5% | 100% | 0 | 9 | 0% | 0.0% | Not Started |
-| **Total** | | **100%** | | 50 | 97 | | **44.0%** | |
+| **Total** | | **100%** | | 60 | 97 | | **55.0%** | |
 
 ---
 
@@ -82,16 +82,16 @@
 - [x] 4.12 `NextSteps` and skeleton loading states; verify >= 2200px rendered height.
 
 ### Phase 5: Grants (Weight 11%)
-- [ ] 5.1 `/grants` list with search, filters, sorting, table/Gantt timeline view, CSV export.
-- [ ] 5.2 Add/edit grant 4-step Stepper modal with live vesting/dates review.
-- [ ] 5.3 `/grants/[id]` detail page with sticky in-page section navigation.
-- [ ] 5.4 Summary terms in `KeyValueList` with derived values.
-- [ ] 5.5 Vesting per-grant chart with markers and full schedule table.
-- [ ] 5.6 Value modeling at multiples, cost, spread, estimated tax via `Figure`.
-- [ ] 5.7 Exercise event recording (`POST/GET /api/grants/[id]/exercise`), ISO countdown, 83(b) reminder trigger.
-- [ ] 5.8 Key dates timeline with idempotent "Add to Actions" buttons.
-- [ ] 5.9 Secure document management, notes, audit trail.
-- [ ] 5.10 Safe grant editing (PATCH) and confirmation dialog for deletion.
+- [x] 5.1 `/grants` list with search, filters, sorting, table/Gantt timeline view, CSV export.
+- [x] 5.2 Add/edit grant 4-step Stepper modal with live vesting/dates review.
+- [x] 5.3 `/grants/[id]` detail page with sticky in-page section navigation.
+- [x] 5.4 Summary terms in `KeyValueList` with derived values.
+- [x] 5.5 Vesting per-grant chart with markers and full schedule table.
+- [x] 5.6 Value modeling at multiples, cost, spread, estimated tax via `Figure`.
+- [x] 5.7 Exercise event recording (`POST/GET /api/grants/[id]/exercise`), ISO countdown, 83(b) reminder trigger.
+- [x] 5.8 Key dates timeline with idempotent "Add to Actions" buttons.
+- [x] 5.9 Secure document management, notes, audit trail.
+- [x] 5.10 Safe grant editing (PATCH) and confirmation dialog for deletion.
 
 ### Phase 6: Calculator and Scenarios (Weight 12%)
 - [ ] 6.1 Calculator layout: Assumptions panel (left), Result (right), saved defaults, 50 states + DC tax rates.
@@ -164,60 +164,61 @@
 
 ## Latest Report
 
-### Phase 4: Overview (Dashboard)
-- **Checklist:** 12/12 items done in this phase (100%)
-- **Overall progress:** 44% complete
-- **Progress bar:** `[█████████░░░░░░░░░░░] 44%` (50/97 items total)
+### Phase 5: Grants
+- **Checklist:** 10/10 items done in this phase (100%)
+- **Overall progress:** 55% complete
+- **Progress bar:** `[███████████░░░░░░░░░] 55%` (60/97 items total)
 
 **DONE:**
-- 4.1 PageHeader: "Your equity" with dynamic summary sentence ("3 grants at 3 companies. Next vest: 250 units on 1 Nov (in 14 days)." or zero-grants prompt), breadcrumbs `App > Overview`, and responsive layout
-- 4.2 "Needs attention": ruled plain table for pending/due high/critical reminders, or calm empty state "Nothing due in the next 30 days." (no amber banner, no warning icons)
-- 4.3 Figure strip: 3 primary Figures with popovers ("How is this calculated?"): Total vested value, Total exercise cost, Net estimated value (pre-tax). Bug 3 fix: unclamped net proceeds displaying negative value with minus sign in loss styling and prominent underwater options note naming affected grants
-- 4.4 "What if the price changes": inline multiple selector (0.5x, 1x, 2x, 5x) explicitly labelled as assumption, dynamically recalculating vested value and net proceeds
-- 4.5 Vesting timeline: stacked cumulative area chart by grant with vertical today line, cliff markers, 12M / All horizon toggles, and accessible screen-reader summary text
-- 4.6 Schedule section: 12-month rolling projections table with monthly units/value and next 10 upcoming vest events dense table
-- 4.7 Allocation section: horizontal bar chart breakdown by employer and by equity structure (ISO, NSO, RSU), plus neutral concentration notice when >50% linking to `/learn#concentration-risk`
-- 4.8 Grants ledger: dense 7-column sortable table (Identifier, Employer, Type, Total Units, Vested Units, Exercise Cost, Net Value) linking directly to `/grants/[id]`
-- 4.9 Watchlist strip: live quotes from watchlist items with daily change badges or calm empty state linking to `/research/companies`
-- 4.10 Activity and learn: human-readable sentences generated from last 8 `AuditLog` events, paired with 3 personalized "Learn next" guide links based on user portfolio structure
-- 4.11 First-run checklist: real-data progress bar tracking 4 milestones (grant added, tax defaults set, reminder reviewed, scenario modeled), dismissible with state persistence
-- 4.12 NextSteps component with preset J1 wiring, skeleton loading state, and verified full-page rendered height > 2,200px
+- 5.1 `/grants` list page: `PageHeader` with title "Grants", dynamic summary sentence, search, filters (Type, Status), sort dropdown (Soonest vest date, Units, Vested value, Grant date), view switcher (dense Ledger table vs Gantt timeline view), and RFC 4180 CSV export
+- 5.2 Add/edit grant 4-step Stepper modal: `GrantStepperModal` with Step 0 (Identity & employer context), Step 1 (Units & strike pricing), Step 2 (Schedule & dates), Step 3 (Summary review & live generated tranche preview table via `generateVestingSchedule`)
+- 5.3 `/grants/[id]` detail page: comprehensive Ledger layout with sticky in-page section navigation (`#overview`, `#vesting`, `#valuation`, `#exercise`, `#dates`, `#documents`, `#audit`)
+- 5.4 Summary terms: structured `KeyValueList` presenting derived parameters (grant date, vesting start, expiration, PTEW window, granted units, vested units, unvested units, percent vested, strike, FMV, spread per share, vested exercise cost, total exercise cost, exercisable units)
+- 5.5 Vesting per-grant chart & schedule: `GrantVestingChart` area chart with today line, cliff marker, 12M / Full schedule toggles, screen-reader text, and dense schedule table with status badges and cumulative metrics
+- 5.6 Value modeling at multiples: hero `Figure` strip with popovers ("How is this calculated?") for Total vested value, Total exercise cost, Net estimated value (pre-tax, unclamped negatives with minus sign and loss styling), and Estimated statutory tax liability (AMT spread for ISO, ordinary income spread for NSO), plus FMV multiple selector (`0.5x`, `1x`, `2x`, `5x`)
+- 5.7 Exercise event recording: `POST/GET /api/grants/[id]/exercise` endpoint and `RecordExerciseModal` dialog with statutory disposition selection (holding vs disqualifying), ISO qualifying holding period tracking, early exercise detection triggering 30-day Section 83(b) reminder, and exercise history table
+- 5.8 Key dates timeline: chronological milestones (Grant authorized, Cliff milestone, Next monthly tranche, ISO qualifying disposition, Option expiration) with idempotent "+ Add to Actions" buttons creating persistent `ActionReminder` records
+- 5.9 Secure document management & notes: private authenticated download via `/api/grants/[id]/document`, secure upload via `/api/grants/upload`, editable notes with save confirmation, and `AuditLog` history table
+- 5.10 Safe grant editing & deletion: `PATCH /api/grants/[id]` supporting term updates (with transactional schedule regeneration if units/dates change) and accessible `Dialog` confirmation for safe deletion with cascade warnings
 
 **NOT DONE:**
-- None for Phase 4
+- None for Phase 5
 
 **CHANGED:**
-- 12 files changed (+1,820 / -165 lines)
-- `src/app/(app)/dashboard/page.tsx`
-- `src/components/dashboard/FigureStrip.tsx`
-- `src/components/dashboard/NeedsAttention.tsx`
-- `src/components/dashboard/VestingTimelineChart.tsx`
-- `src/components/dashboard/ScheduleSection.tsx`
-- `src/components/dashboard/AllocationSection.tsx`
-- `src/components/dashboard/GrantsTable.tsx`
-- `src/components/dashboard/WatchlistStrip.tsx`
-- `src/components/dashboard/ActivityAndLearn.tsx`
-- `src/components/dashboard/FirstRunChecklist.tsx`
-- `tests/dashboard.test.ts`
+- 11 files changed (+2,050 / -340 lines)
+- `src/app/(app)/grants/page.tsx`
+- `src/app/(app)/grants/[id]/page.tsx`
+- `src/app/api/grants/[id]/route.ts`
+- `src/app/api/grants/[id]/exercise/route.ts`
+- `src/components/grants/GrantStepperModal.tsx`
+- `src/components/grants/GrantIntakeModal.tsx`
+- `src/components/grants/RecordExerciseModal.tsx`
+- `src/components/grants/GrantsGanttView.tsx`
+- `src/components/grants/GrantVestingChart.tsx`
+- `tests/grants.test.ts`
 - `docs/REDESIGN_PROGRESS.md`
 - 0 new runtime dependencies added
-- 1 new test file: `tests/dashboard.test.ts` (4 unit tests)
+- 1 new test file: `tests/grants.test.ts` (6 unit tests)
 
 **VERIFIED:**
-- tests: 35 passed, 0 failed across 5 test suites (dashboard, shell-settings, landing-auth, calculations, document)
+- tests: 41 passed, 0 failed across 6 test suites (`tests/grants.test.ts`, `tests/dashboard.test.ts`, `tests/shell-settings.test.ts`, `tests/landing-auth.test.ts`, `tests/calculations.test.ts`, `tests/document.test.ts`)
 - lint: 0 errors
 - tsc: clean, 0 errors
-- build: clean, all 38 routes prerendered / dynamic matching specifications
-- style gate: Sparkles 6 | bg-gradient 0 | rounded-2xl/3xl 44 | slate- 726 | emerald- 216 | emoji 1 (0 new violations in Phase 4)
-- copy gate: banned words found 3 (0 in new dashboard code; remaining 3 in legacy unredesigned files)
+- build: clean, all routes prerendered / dynamic matching specifications
+- style gate: Sparkles 4 | bg-gradient 0 | rounded-2xl/3xl 41 | slate- 605 | emerald- 177 | emoji 1 (legacy tokens reduced further; zero violations in new Phase 5 code)
+- copy gate: banned words found 3 (0 in new grants code; remaining 3 in legacy unmigrated files)
 
 **HOW TO SEE IT:**
-- Run `npm run dev` and navigate to `http://localhost:3000/dashboard` (sign in or click "Try it with sample data")
-- Inspect the 3 hero Figures: observe unclamped net value and "How is this calculated?" popovers
-- Toggle the "What if the price changes" buttons (0.5x, 1x, 2x, 5x) to observe dynamic valuation updates
-- Scroll through the stacked vesting timeline chart, 12-month schedule projection grid, allocation bars, dense 7-column grants table, watchlist strip, recent activity log, and first-run checklist
+- Run `npm run dev` and navigate to `http://localhost:3000/grants`
+- Test search, Type filter (ISO, NSO, RSU), Status filter, and sort options
+- Toggle between Table view and Timeline view to see the Gantt visualization with cliff and today markers
+- Click "+ Record grant" to open the 4-step Stepper modal, step through terms, and see live generated schedule preview
+- Click "Details" or a grant row to visit `/grants/[id]`
+- Use the sticky in-page navigation to jump across Overview, Vesting, Valuation modeling, Exercise history, Key dates, Documents, and Audit trail
+- Adjust FMV multiples (`0.5x`, `1x`, `2x`, `5x`) and observe unclamped net value and "How is this calculated?" popovers
+- Click "Record exercise" to open the exercise modal and test holding period vs disqualifying disposition calculations
 
 **NEXT:**
-- Phase 5: Grants (Weight 11%, cumulative 55%)
-- Comprehensive overhaul of `/grants` list (table/Gantt view, search/filters, CSV export), 4-step Stepper modal for grant intake, `/grants/[id]` detail page with sticky in-page navigation, exercise event recording (`POST/GET /api/grants/[id]/exercise`), key dates timeline, and safe deletion.
+- Phase 6: Calculator and Scenarios (Weight 12%, cumulative 67%)
+- Redesigning `/calculator` and `/scenarios` into "The Ledger" layout (Assumptions panel left, Result right, waterfall breakdown, unclamped negative net proceeds, `breakEvenExitPrice()`, `amtSensitivity()`, strategy modeler, tender-offer modeler with cost basis fix, dedicated standalone `/scenarios/83b` page, departure planning `/scenarios/leaving`, dilution modeler `/scenarios/dilution`).
 

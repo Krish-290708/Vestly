@@ -115,3 +115,4 @@ export function WatchlistStrip() {
 }
 
 export default WatchlistStrip;
+

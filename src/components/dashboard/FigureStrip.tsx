@@ -235,3 +235,4 @@ export function FigureStrip({
 }
 
 export default FigureStrip;
+

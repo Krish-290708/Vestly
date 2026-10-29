@@ -1,37 +1,51 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { 
-  Layers, 
-  PlusCircle, 
-  Upload, 
-  FileText, 
-  Calendar, 
-  Clock, 
-  Edit3, 
-  Trash2, 
-  ChevronDown, 
-  ChevronUp, 
-  CheckCircle,
-  ExternalLink
-} from 'lucide-react';
-import GrantIntakeModal from '@/components/grants/GrantIntakeModal';
+import {
+  PageHeader,
+  Button,
+  Input,
+  Select,
+  Badge,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  Skeleton,
+  EmptyState,
+  Dialog,
+  ProgressBar,
+} from '@/components/ui';
+import GrantStepperModal from '@/components/grants/GrantStepperModal';
+import GrantsGanttView from '@/components/grants/GrantsGanttView';
+import { NextSteps } from '@/components/layout/NextSteps';
+import { money, units as formatUnits, date as formatDate } from '@/lib/format';
 
 export default function GrantsPage() {
   const [grants, setGrants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [expandedGrantId, setExpandedGrantId] = useState<string | null>(null);
-  
-  // FMV inline edit state
-  const [editingFmvGrantId, setEditingFmvGrantId] = useState<string | null>(null);
-  const [newFmvValue, setNewFmvValue] = useState<string>('');
-  
-  // Document upload state
-  const [uploadingGrantId, setUploadingGrantId] = useState<string | null>(null);
 
-  const fetchGrants = async () => {
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingGrant, setEditingGrant] = useState<any | null>(null);
+  const [deleteConfirmGrant, setDeleteConfirmGrant] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Filters and views
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [sortBy, setSortBy] = useState('VEST_DATE');
+  const [activeView, setActiveView] = useState<'TABLE' | 'TIMELINE'>('TABLE');
+
+  // Inline FMV edit
+  const [editingFmvId, setEditingFmvId] = useState<string | null>(null);
+  const [newFmv, setNewFmv] = useState('');
+
+  const fetchGrants = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/grants');
@@ -40,26 +54,29 @@ export default function GrantsPage() {
         setGrants(data.grants || []);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load grants:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchGrants();
-  }, []);
+  }, [fetchGrants]);
 
-  const handleUpdateFmv = async (grantId: string) => {
-    if (!newFmvValue || isNaN(parseFloat(newFmvValue))) return;
+  // Handle Quick FMV update
+  const handleSaveFmv = async (grantId: string) => {
+    const val = parseFloat(newFmv);
+    if (isNaN(val) || val < 0) return;
+
     try {
       const res = await fetch(`/api/grants/${grantId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latestFmvPerShare: newFmvValue }),
+        body: JSON.stringify({ latestFmvPerShare: val }),
       });
       if (res.ok) {
-        setEditingFmvGrantId(null);
+        setEditingFmvId(null);
         fetchGrants();
       }
     } catch (err) {
@@ -67,336 +84,546 @@ export default function GrantsPage() {
     }
   };
 
-  const handleDeleteGrant = async (grantId: string) => {
-    if (!confirm('Are you sure you want to delete this grant and its vesting history?')) return;
+  // Handle Delete Confirmation
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmGrant) return;
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/grants/${grantId}`, { method: 'DELETE' });
-      if (res.ok) fetchGrants();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, grantId: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('grantId', grantId);
-
-    setUploadingGrantId(grantId);
-    try {
-      const res = await fetch('/api/grants/upload', {
-        method: 'POST',
-        body: formData,
+      const res = await fetch(`/api/grants/${deleteConfirmGrant.id}`, {
+        method: 'DELETE',
       });
       if (res.ok) {
+        setDeleteConfirmGrant(null);
         fetchGrants();
       }
     } catch (err) {
       console.error(err);
     } finally {
-      setUploadingGrantId(null);
+      setDeleting(false);
     }
   };
 
+  // CSV Export
+  const handleExportCsv = () => {
+    if (grants.length === 0) return;
+
+    const headers = [
+      'Identifier',
+      'Employer',
+      'Type',
+      'Units Granted',
+      'Strike Price',
+      'Current FMV',
+      'Vested Units',
+      'Percent Vested',
+      'Vested Value',
+      'Exercise Cost',
+      'Net Value',
+      'Grant Date',
+      'Vesting Start Date',
+      'Expiration Date',
+      'Status',
+    ];
+
+    const rows = grants.map((g) => {
+      const netVal = (g.vestedValue || 0) - (g.vestedExerciseCost || 0);
+      return [
+        `"${g.grantIdentifier || ''}"`,
+        `"${g.company?.name || ''}"`,
+        g.grantType,
+        g.unitsGranted,
+        g.strikePrice,
+        g.company?.latestFmvPerShare || 0,
+        g.vestedUnits || 0,
+        `${Math.round(g.percentVested || 0)}%`,
+        g.vestedValue || 0,
+        g.vestedExerciseCost || 0,
+        netVal,
+        g.grantDate ? new Date(g.grantDate).toISOString().split('T')[0] : '',
+        g.vestingStartDate ? new Date(g.vestingStartDate).toISOString().split('T')[0] : '',
+        g.expirationDate ? new Date(g.expirationDate).toISOString().split('T')[0] : '',
+        g.status || 'VESTING',
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `vestly_grants_ledger_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Filtered and sorted grants
+  const filteredGrants = useMemo(() => {
+    let result = [...grants];
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (g) =>
+          g.grantIdentifier?.toLowerCase().includes(q) ||
+          g.company?.name?.toLowerCase().includes(q)
+      );
+    }
+
+    // Type filter
+    if (typeFilter !== 'ALL') {
+      result = result.filter((g) => g.grantType === typeFilter);
+    }
+
+    // Status filter
+    if (statusFilter !== 'ALL') {
+      result = result.filter((g) => (g.status || 'VESTING') === statusFilter);
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      if (sortBy === 'VEST_DATE') {
+        const da = a.nextVestingDate ? new Date(a.nextVestingDate).getTime() : Infinity;
+        const db = b.nextVestingDate ? new Date(b.nextVestingDate).getTime() : Infinity;
+        return da - db;
+      }
+      if (sortBy === 'UNITS_DESC') {
+        return b.unitsGranted - a.unitsGranted;
+      }
+      if (sortBy === 'VALUE_DESC') {
+        return (b.vestedValue || 0) - (a.vestedValue || 0);
+      }
+      if (sortBy === 'GRANT_DATE_DESC') {
+        return new Date(b.grantDate).getTime() - new Date(a.grantDate).getTime();
+      }
+      return 0;
+    });
+
+    return result;
+  }, [grants, searchQuery, typeFilter, statusFilter, sortBy]);
+
+  // Derived summaries for header context sentence
+  const summarySentence = useMemo(() => {
+    if (grants.length === 0) {
+      return 'No equity grants registered yet. Add a grant to monitor vesting schedules and model exercise scenarios.';
+    }
+    const compSet = new Set(grants.map((g) => g.company?.name || 'Company'));
+    const totalUnits = grants.reduce((sum, g) => sum + g.unitsGranted, 0);
+    const totalVested = grants.reduce((sum, g) => sum + (g.vestedUnits || 0), 0);
+    const grantLabel = grants.length === 1 ? 'grant' : 'grants';
+    const compLabel = compSet.size === 1 ? 'employer' : 'employers';
+
+    return `${grants.length} ${grantLabel} across ${compSet.size} ${compLabel}. ${formatUnits(
+      totalUnits
+    )} units granted, ${formatUnits(totalVested)} units vested.`;
+  }, [grants]);
+
   return (
-    <div className="space-y-8 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            My Equity Grants
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-              {grants.length} Total
-            </span>
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Store grant agreements, update latest 409A valuations, and inspect full tranche vesting schedules
-          </p>
+    <div className="space-y-6 pb-12">
+      {/* Page Header */}
+      <PageHeader
+        eyebrow="App / Grants"
+        title="Grants"
+        contextSentence={summarySentence}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportCsv}
+              disabled={grants.length === 0}
+            >
+              Export CSV
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setEditingGrant(null);
+                setIsModalOpen(true);
+              }}
+            >
+              + Record grant
+            </Button>
+          </div>
+        }
+      />
+
+      {/* Toolbar & Filters */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-surface border border-rule rounded-sm text-xs">
+        <div className="flex flex-wrap items-center gap-2 flex-1">
+          {/* Search */}
+          <div className="w-full sm:w-60">
+            <Input
+              placeholder="Search identifier or employer..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="text-xs"
+            />
+          </div>
+
+          {/* Type Filter */}
+          <div className="w-28">
+            <Select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="text-xs"
+              options={[
+                { value: 'ALL', label: 'All types' },
+                { value: 'ISO', label: 'ISO' },
+                { value: 'NSO', label: 'NSO' },
+                { value: 'RSU', label: 'RSU' },
+                { value: 'ESPP', label: 'ESPP' },
+              ]}
+            />
+          </div>
+
+          {/* Status Filter */}
+          <div className="w-32">
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="text-xs"
+              options={[
+                { value: 'ALL', label: 'All statuses' },
+                { value: 'VESTING', label: 'Vesting' },
+                { value: 'FULLY_VESTED', label: 'Fully vested' },
+                { value: 'EXERCISED', label: 'Exercised' },
+                { value: 'EXPIRED', label: 'Expired' },
+              ]}
+            />
+          </div>
+
+          {/* Sort */}
+          <div className="w-40">
+            <Select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="text-xs"
+              options={[
+                { value: 'VEST_DATE', label: 'Soonest vest date' },
+                { value: 'UNITS_DESC', label: 'Units: high to low' },
+                { value: 'VALUE_DESC', label: 'Vested value: high to low' },
+                { value: 'GRANT_DATE_DESC', label: 'Grant date: newest' },
+              ]}
+            />
+          </div>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-sm transition-all"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Add Another Grant
-        </button>
+        {/* View Switcher Toggle */}
+        <div className="inline-flex items-center border border-rule rounded-sm overflow-hidden bg-sunk p-0.5">
+          <button
+            type="button"
+            onClick={() => setActiveView('TABLE')}
+            className={`px-3 py-1 text-xs font-medium rounded-xs transition-colors ${
+              activeView === 'TABLE'
+                ? 'bg-surface text-ink font-semibold shadow-xs'
+                : 'text-muted hover:text-ink'
+            }`}
+          >
+            Table view
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('TIMELINE')}
+            className={`px-3 py-1 text-xs font-medium rounded-xs transition-colors ${
+              activeView === 'TIMELINE'
+                ? 'bg-surface text-ink font-semibold shadow-xs'
+                : 'text-muted hover:text-ink'
+            }`}
+          >
+            Timeline view
+          </button>
+        </div>
       </div>
 
-      {/* Grants Cards List */}
-      <div className="space-y-4">
-        {grants.map((grant) => {
-          const isExpanded = expandedGrantId === grant.id;
-          const isEditingFmv = editingFmvGrantId === grant.id;
-
-          return (
-            <div 
-              key={grant.id} 
-              className="bg-slate-900/90 rounded-2xl border border-slate-800 shadow-card overflow-hidden transition-all"
+      {/* Main Content Area */}
+      {loading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      ) : grants.length === 0 ? (
+        <EmptyState
+          title="No equity grants recorded"
+          description="Track stock options, RSUs, and purchase plans. Calculate statutory exercise costs and monitor vesting milestones."
+          action={
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setEditingGrant(null);
+                setIsModalOpen(true);
+              }}
             >
-              {/* Grant Header Bar */}
-              <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-white">
-                      {grant.company?.name || 'Company'}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      grant.grantType === 'ISO' 
-                        ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/60' 
-                        : grant.grantType === 'NSO' 
-                          ? 'bg-blue-950/60 text-blue-300 border border-blue-800/60' 
-                          : 'bg-purple-950/60 text-purple-300 border border-purple-800/60'
-                    }`}>
-                      {grant.grantType}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-                      {grant.grantIdentifier}
-                    </span>
-                    {grant.earlyExercisable && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950/60 text-amber-300 border border-amber-800/60">
-                        Early Exercisable
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-slate-400 flex flex-wrap items-center gap-3">
-                    <span>Granted: {new Date(grant.grantDate).toLocaleDateString()}</span>
-                    <span>•</span>
-                    <span>Vesting Start: {new Date(grant.vestingStartDate).toLocaleDateString()}</span>
-                    <span>•</span>
-                    <span>Expires: {new Date(grant.expirationDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
+              + Record your first grant
+            </Button>
+          }
+        />
+      ) : filteredGrants.length === 0 ? (
+        <EmptyState
+          title="No grants match your filter"
+          description="Try clearing search query or adjusting filter parameters."
+          action={
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setSearchQuery('');
+                setTypeFilter('ALL');
+                setStatusFilter('ALL');
+              }}
+            >
+              Reset filters
+            </Button>
+          }
+        />
+      ) : activeView === 'TIMELINE' ? (
+        <GrantsGanttView grants={filteredGrants} />
+      ) : (
+        /* Table View */
+        <Table className="text-xs">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Identifier & employer</TableHead>
+              <TableHead>Structure</TableHead>
+              <TableHead className="text-right">Granted / vested units</TableHead>
+              <TableHead className="text-right">Strike / cost</TableHead>
+              <TableHead className="text-right">409A FMV</TableHead>
+              <TableHead className="text-right">Vested value</TableHead>
+              <TableHead className="text-right">Net pre-tax</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredGrants.map((g) => {
+              const netValue = (g.vestedValue || 0) - (g.vestedExerciseCost || 0);
+              const isUnderwater = g.grantType !== 'RSU' && netValue < 0;
+              const isEditingFmv = editingFmvId === g.id;
 
-                {/* Primary Numbers Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs border-y sm:border-y-0 sm:border-l border-slate-800 py-3 sm:py-0 sm:pl-6">
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">Units</span>
-                    <span className="font-bold text-white text-sm">
-                      {grant.unitsGranted.toLocaleString()}
-                    </span>
-                    <span className="text-[10px] text-emerald-400 block">
-                      {(grant.vestedUnits || 0).toLocaleString()} vested
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">Strike Price</span>
-                    <span className="font-mono font-bold text-white text-sm">
-                      {grant.grantType === 'RSU' ? '$0.00' : `$${grant.strikePrice.toFixed(2)}`}
-                    </span>
-                    <span className="text-[10px] text-slate-400 block">
-                      ${(grant.vestedExerciseCost || 0).toLocaleString()} cost
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 block text-[11px] flex items-center gap-1">
-                      Current FMV
-                      <button
-                        onClick={() => {
-                          setEditingFmvGrantId(grant.id);
-                          setNewFmvValue(grant.company?.latestFmvPerShare?.toString() || '');
-                        }}
-                        title="Update 409A / FMV"
-                        className="text-slate-400 hover:text-emerald-400"
+              return (
+                <TableRow key={g.id}>
+                  {/* Identifier & Employer */}
+                  <TableCell>
+                    <div className="space-y-0.5">
+                      <Link
+                        href={`/grants/${g.id}`}
+                        className="font-semibold text-ink hover:underline focus:outline-none"
                       >
-                        <Edit3 className="w-3 h-3" />
-                      </button>
-                    </span>
+                        {g.grantIdentifier}
+                      </Link>
+                      <div className="text-[11px] text-muted flex items-center gap-1.5">
+                        <span>{g.company?.name || 'Company'}</span>
+                        {g.company?.ticker && (
+                          <span className="font-mono text-[10px] text-muted">
+                            ({g.company.ticker})
+                          </span>
+                        )}
+                        {g.earlyExercisable && (
+                          <span className="font-mono text-[10px] text-accent">
+                            • Early exercisable
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+
+                  {/* Structure */}
+                  <TableCell>
+                    <Badge tone="neutral">
+                      {g.grantType}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Units */}
+                  <TableCell className="text-right font-mono">
+                    <div className="font-semibold text-ink">
+                      {formatUnits(g.vestedUnits || 0)}
+                      <span className="text-muted font-normal text-[11px]">
+                        {' '}/ {formatUnits(g.unitsGranted)}
+                      </span>
+                    </div>
+                    <div className="w-24 ml-auto mt-1">
+                      <ProgressBar
+                        value={
+                          g.unitsGranted > 0
+                            ? Math.round(((g.vestedUnits || 0) / g.unitsGranted) * 100)
+                            : 0
+                        }
+                      />
+                    </div>
+                  </TableCell>
+
+                  {/* Strike & Cost */}
+                  <TableCell className="text-right font-mono">
+                    <div className="text-ink">
+                      {g.grantType === 'RSU' ? '$0.00' : money(g.strikePrice)}
+                    </div>
+                    <div className="text-[11px] text-muted">
+                      cost {money(g.vestedExerciseCost || 0)}
+                    </div>
+                  </TableCell>
+
+                  {/* 409A FMV (Inline edit) */}
+                  <TableCell className="text-right font-mono">
                     {isEditingFmv ? (
-                      <div className="flex items-center gap-1 mt-0.5">
+                      <div className="flex items-center justify-end gap-1">
                         <input
                           type="number"
-                          step="0.1"
-                          value={newFmvValue}
-                          onChange={(e) => setNewFmvValue(e.target.value)}
-                          className="w-16 px-1.5 py-0.5 text-xs bg-slate-950 border border-emerald-500 rounded font-mono text-white"
+                          step="0.01"
+                          value={newFmv}
+                          onChange={(e) => setNewFmv(e.target.value)}
+                          className="w-16 px-1 py-0.5 text-xs bg-surface border border-accent rounded-xs font-mono text-ink text-right focus:outline-none"
                         />
                         <button
-                          onClick={() => handleUpdateFmv(grant.id)}
-                          className="text-[10px] bg-emerald-500 text-slate-950 px-1.5 py-0.5 rounded font-bold"
+                          type="button"
+                          onClick={() => handleSaveFmv(g.id)}
+                          className="text-[10px] px-1 py-0.5 bg-accent text-accent-contrast rounded-xs"
                         >
                           Save
                         </button>
                       </div>
                     ) : (
-                      <>
-                        <span className="font-mono font-bold text-white text-sm">
-                          ${grant.company?.latestFmvPerShare?.toFixed(2) || '0.00'}
-                        </span>
-                        <span className="text-[10px] text-slate-500 block">
-                          409A / share
-                        </span>
-                      </>
+                      <div
+                        className="cursor-pointer hover:underline text-ink inline-block"
+                        title="Click to update 409A FMV"
+                        onClick={() => {
+                          setEditingFmvId(g.id);
+                          setNewFmv(String(g.company?.latestFmvPerShare || '0.00'));
+                        }}
+                      >
+                        {money(g.company?.latestFmvPerShare || 0)}
+                      </div>
                     )}
-                  </div>
+                  </TableCell>
 
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">Est. Vested Value</span>
-                    <span className="font-bold text-emerald-400 text-sm">
-                      ${(grant.vestedValue || 0).toLocaleString()}
+                  {/* Vested Value */}
+                  <TableCell className="text-right font-mono font-medium text-ink">
+                    {money(g.vestedValue || 0)}
+                  </TableCell>
+
+                  {/* Net Value (Unclamped) */}
+                  <TableCell className="text-right font-mono font-semibold">
+                    <span className={isUnderwater ? 'text-loss' : 'text-profit'}>
+                      {netValue < 0 ? `-${money(Math.abs(netValue))}` : money(netValue)}
                     </span>
-                    <span className="text-[10px] font-semibold text-emerald-400 block">
-                      ESTIMATE
-                    </span>
-                  </div>
-                </div>
+                  </TableCell>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/calculator?grant=${grant.id}`}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors shadow-xs"
-                  >
-                    Model Tax
-                  </Link>
-                  <button
-                    onClick={() => setExpandedGrantId(isExpanded ? null : grant.id)}
-                    className="p-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                    title={isExpanded ? 'Hide Schedule' : 'Show Schedule'}
-                  >
-                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
-                  <button
-                    onClick={() => handleDeleteGrant(grant.id)}
-                    className="p-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 transition-colors"
-                    title="Delete Grant"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+                  {/* Status */}
+                  <TableCell>
+                    <Badge
+                      tone={
+                        g.status === 'FULLY_VESTED' || g.status === 'EXERCISED'
+                          ? 'gain'
+                          : g.status === 'EXPIRED'
+                          ? 'loss'
+                          : 'neutral'
+                      }
+                    >
+                      {g.status ? g.status.replace(/_/g, ' ') : 'VESTING'}
+                    </Badge>
+                  </TableCell>
 
-              {/* Document Attachment & Notes Bar */}
-              <div className="bg-slate-950/60 px-6 py-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-400 font-medium">Grant Agreement:</span>
-                  {grant.documentName ? (
-                    <div className="flex items-center gap-2 text-emerald-400 font-semibold">
-                      <FileText className="w-4 h-4" />
-                      <span>{grant.documentName}</span>
-                      {grant.documentPath && (
-                        <a 
-                          href={grant.documentPath} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="text-slate-400 hover:text-white"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      )}
+                  {/* Actions */}
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/grants/${g.id}`}
+                        className="text-xs text-accent hover:underline font-medium"
+                      >
+                        Details
+                      </Link>
+                      <span className="text-rule">•</span>
+                      <Link
+                        href={`/calculator?grant=${g.id}`}
+                        className="text-xs text-muted hover:text-ink font-medium"
+                      >
+                        Tax
+                      </Link>
+                      <span className="text-rule">•</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingGrant(g);
+                          setIsModalOpen(true);
+                        }}
+                        className="text-xs text-muted hover:text-ink"
+                      >
+                        Edit
+                      </button>
+                      <span className="text-rule">•</span>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteConfirmGrant(g)}
+                        className="text-xs text-loss hover:opacity-80"
+                      >
+                        Delete
+                      </button>
                     </div>
-                  ) : (
-                    <label className="cursor-pointer text-slate-400 hover:text-white flex items-center gap-1.5 font-medium">
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>{uploadingGrantId === grant.id ? 'Uploading...' : 'Upload PDF Agreement'}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,.png,.jpg,.jpeg"
-                        className="hidden"
-                        onChange={(e) => handleFileUpload(e, grant.id)}
-                      />
-                    </label>
-                  )}
-                </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
 
-                {grant.notes && (
-                  <div className="text-slate-400 italic max-w-md truncate">
-                    &quot;{grant.notes}&quot;
-                  </div>
-                )}
-              </div>
-
-              {/* Expanded Vesting Schedule Table */}
-              {isExpanded && (
-                <div className="p-6 bg-slate-950/90 border-t border-slate-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                      <Calendar className="w-4 h-4 text-emerald-400" />
-                      Tranche Vesting Schedule ({grant.vestingEvents?.length || 0} Events)
-                    </h4>
-                    <span className="text-xs text-slate-400">
-                      Schedule: {grant.vestingSchedule.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-
-                  <div className="max-h-60 overflow-y-auto border border-slate-800 rounded-xl bg-slate-900 shadow-xs">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-950 text-slate-400 sticky top-0 font-semibold text-[11px] border-b border-slate-800">
-                        <tr>
-                          <th className="px-4 py-2">Tranche Date</th>
-                          <th className="px-4 py-2">Units Vested</th>
-                          <th className="px-4 py-2">Cumulative Vested</th>
-                          <th className="px-4 py-2">Vested Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800 text-slate-200 font-medium">
-                        {(grant.vestingEvents || []).map((evt: any, idx: number) => {
-                          const isVested = new Date(evt.vestDate) <= new Date();
-                          return (
-                            <tr key={evt.id || idx} className={isVested ? 'bg-emerald-950/20' : ''}>
-                              <td className="px-4 py-2 font-mono text-slate-300">
-                                {new Date(evt.vestDate).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}
-                              </td>
-                              <td className="px-4 py-2 font-bold text-white">
-                                +{evt.unitsVested.toLocaleString()}
-                              </td>
-                              <td className="px-4 py-2 text-slate-300">
-                                {evt.cumulativeVested.toLocaleString()}
-                              </td>
-                              <td className="px-4 py-2">
-                                {isVested ? (
-                                  <span className="text-emerald-400 font-bold flex items-center gap-1">
-                                    <CheckCircle className="w-3.5 h-3.5" /> Vested
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-500 flex items-center gap-1">
-                                    <Clock className="w-3.5 h-3.5" /> Scheduled
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {grants.length === 0 && !loading && (
-          <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-12 text-center space-y-4 shadow-card">
-            <Layers className="w-10 h-10 text-emerald-400 mx-auto" />
-            <h3 className="text-base font-bold text-white">No equity grants added yet</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              Add your ISO, NSO, or RSU grant details to track vesting and calculate tax liabilities.
-            </p>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={Boolean(deleteConfirmGrant)}
+        onClose={() => setDeleteConfirmGrant(null)}
+        title="Delete equity grant"
+        description="This action removes the grant record and associated vesting tranches."
+        maxWidth="sm"
+      >
+        <div className="space-y-4 text-xs">
+          <p className="text-ink">
+            Are you sure you want to delete{' '}
+            <strong className="font-semibold">{deleteConfirmGrant?.grantIdentifier}</strong> (
+            {deleteConfirmGrant?.company?.name})?
+          </p>
+          <p className="text-muted text-[11px]">
+            All historical vesting events and associated reminders for this grant will be permanently removed.
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-rule">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setDeleteConfirmGrant(null)}
+              disabled={deleting}
             >
-              Add Your First Grant
-            </button>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              loading={deleting}
+              onClick={handleConfirmDelete}
+            >
+              Delete grant
+            </Button>
           </div>
-        )}
-      </div>
+        </div>
+      </Dialog>
 
-      <GrantIntakeModal
+      {/* Stepper Modal for Add / Edit */}
+      <GrantStepperModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingGrant(null);
+        }}
         onSuccess={fetchGrants}
+        initialData={editingGrant}
       />
+
+      {/* Next steps links */}
+      <NextSteps preset="J1" />
     </div>
   );
 }
