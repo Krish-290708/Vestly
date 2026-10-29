@@ -1,42 +1,40 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { 
-  TrendingUp, 
-  Layers, 
-  PlusCircle, 
-  ArrowUpRight, 
-  AlertTriangle,
-  ChevronRight,
-  Calculator,
-  RefreshCw
-} from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
-} from 'recharts';
+import { Plus, RefreshCw } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { FigureStrip } from '@/components/dashboard/FigureStrip';
+import { NeedsAttention, ActionReminderItem } from '@/components/dashboard/NeedsAttention';
+import { VestingTimelineChart, GrantForTimeline } from '@/components/dashboard/VestingTimelineChart';
+import { ScheduleSection, GrantEventItem } from '@/components/dashboard/ScheduleSection';
+import { AllocationSection, GrantAllocationItem } from '@/components/dashboard/AllocationSection';
+import { GrantsTable, GrantTableRow } from '@/components/dashboard/GrantsTable';
+import { WatchlistStrip } from '@/components/dashboard/WatchlistStrip';
+import { ActivityAndLearn, AuditLogItem } from '@/components/dashboard/ActivityAndLearn';
+import { FirstRunChecklist } from '@/components/dashboard/FirstRunChecklist';
+import { NextSteps } from '@/components/layout/NextSteps';
 import GrantIntakeModal from '@/components/grants/GrantIntakeModal';
-import PortfolioMetricsGrid from '@/components/dashboard/PortfolioMetricsGrid';
-import { buildCombinedTimeline } from '@/lib/calculations/vesting';
+import { date as formatDate, relativeDays } from '@/lib/format';
 
 export default function DashboardPage() {
   const [grants, setGrants] = useState<any[]>([]);
-  const [reminders, setReminders] = useState<any[]>([]);
+  const [reminders, setReminders] = useState<ActionReminderItem[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
+  const [taxDefaults, setTaxDefaults] = useState<any | null>(null);
+  const [hasScenarios, setHasScenarios] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [fmvMultiplier, setFmvMultiplier] = useState(1);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
-      const [grantsRes, actionsRes] = await Promise.all([
+      const [grantsRes, actionsRes, settingsRes] = await Promise.all([
         fetch('/api/grants'),
-        fetch('/api/actions')
+        fetch('/api/actions'),
+        fetch('/api/settings'),
       ]);
 
       if (grantsRes.ok) {
@@ -44,368 +42,260 @@ export default function DashboardPage() {
         setGrants(data.grants || []);
       }
       if (actionsRes.ok) {
-        const actData = await actionsRes.json();
-        setReminders(actData.reminders || []);
+        const data = await actionsRes.json();
+        setReminders(data.reminders || []);
+        setAuditLogs(data.auditLogs || []);
+      }
+      if (settingsRes.ok) {
+        const data = await settingsRes.json();
+        setTaxDefaults(data.taxDefaults || null);
+        if (data.savedScenarios && data.savedScenarios.length > 0) {
+          setHasScenarios(true);
+        }
       }
     } catch (err) {
-      console.error('Failed to load dashboard:', err);
+      console.error('Failed to load dashboard data:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
-  // Aggregated calculations
-  const totalGranted = grants.reduce((sum, g) => sum + (g.unitsGranted || 0), 0);
-  const totalVested = grants.reduce((sum, g) => sum + (g.vestedUnits || 0), 0);
-  const totalUnvested = Math.max(0, totalGranted - totalVested);
-  const percentVested = totalGranted > 0 ? Math.round((totalVested / totalGranted) * 100) : 0;
-
-  const totalVestedValue = grants.reduce((sum, g) => sum + (g.vestedValue || 0), 0);
-  const totalExerciseCost = grants.reduce((sum, g) => sum + (g.vestedExerciseCost || 0), 0);
-  const netEstimatedEquity = Math.max(0, totalVestedValue - totalExerciseCost);
-
-  // Find next upcoming vest event across all grants
-  const nextVestEvent = React.useMemo(() => {
-    let next: { date: Date; units: number; companyName: string; grantIdentifier: string } | null = null;
+  // Derived summaries for PageHeader dynamic sentence
+  const { uniqueCompanies, nextVestInfo } = useMemo<{
+    uniqueCompanies: string[];
+    nextVestInfo: { date: Date; units: number; companyName: string } | null;
+  }>(() => {
+    const compSet = new Set<string>();
+    let nextEvent: { date: Date; units: number; companyName: string } | null = null;
     const now = new Date();
 
-    for (const g of grants) {
-      if (g.vestingEvents) {
-        for (const evt of g.vestingEvents) {
-          const d = new Date(evt.vestDate);
-          if (d > now) {
-            if (!next || d < next.date) {
-              next = {
-                date: d,
-                units: evt.unitsVested,
-                companyName: g.company?.name || 'Company',
-                grantIdentifier: g.grantIdentifier,
-              };
-            }
+    grants.forEach((g) => {
+      const cName = g.company?.name || 'Company';
+      compSet.add(cName);
+
+      (g.vestingEvents || []).forEach((e: any) => {
+        const vDate = new Date(e.vestDate);
+        if (vDate > now) {
+          if (!nextEvent || vDate < nextEvent.date) {
+            nextEvent = {
+              date: vDate,
+              units: e.unitsVested,
+              companyName: cName,
+            };
           }
         }
-      }
-    }
-    return next;
+      });
+    });
+
+    return {
+      uniqueCompanies: Array.from(compSet),
+      nextVestInfo: nextEvent,
+    };
   }, [grants]);
 
-  // Recharts timeline
-  const timelineData = buildCombinedTimeline(
-    grants.map(g => ({
+  // Dynamic context sentence per 4.1 & C6:
+  // "3 grants at 3 companies. Next vest: 250 units on 1 Nov (in 14 days)."
+  const contextSentence = useMemo(() => {
+    if (grants.length === 0) {
+      return 'No equity grants recorded yet. Add your first grant to track vesting milestones and exercise costs.';
+    }
+
+    const grantCountStr = `${grants.length} ${grants.length === 1 ? 'grant' : 'grants'}`;
+    const compCountStr = `at ${uniqueCompanies.length} ${uniqueCompanies.length === 1 ? 'company' : 'companies'}`;
+
+    if (nextVestInfo) {
+      const dateStr = formatDate(nextVestInfo.date);
+      const relStr = relativeDays(nextVestInfo.date);
+      return `${grantCountStr} ${compCountStr}. Next vest: ${nextVestInfo.units.toLocaleString()} units on ${dateStr} (${relStr}).`;
+    }
+
+    return `${grantCountStr} ${compCountStr}. All registered grants are fully vested.`;
+  }, [grants, uniqueCompanies, nextVestInfo]);
+
+  // Normalized data adapters for child components
+  const metricGrants = useMemo(() => {
+    return grants.map((g) => ({
       id: g.id,
       grantIdentifier: g.grantIdentifier,
-      companyName: g.company?.name || '',
+      grantType: g.grantType,
       unitsGranted: g.unitsGranted,
-      vestingEvents: g.vestingEvents || [],
-    }))
-  );
+      vestedUnits: g.vestedUnits || 0,
+      strikePrice: g.strikePrice,
+      currentFmv: g.company?.latestFmvPerShare || 0,
+      companyName: g.company?.name || 'Company',
+    }));
+  }, [grants]);
 
-  const urgentTasks = reminders.filter(r => r.status === 'PENDING' && (r.urgency === 'CRITICAL' || r.urgency === 'HIGH')).slice(0, 3);
+  const timelineGrants: GrantForTimeline[] = useMemo(() => {
+    return grants.map((g) => ({
+      id: g.id,
+      grantIdentifier: g.grantIdentifier,
+      companyName: g.company?.name || 'Company',
+      unitsGranted: g.unitsGranted,
+      strikePrice: g.strikePrice,
+      currentFmv: g.company?.latestFmvPerShare || 0,
+      cliffDate: g.vestingStartDate
+        ? new Date(
+            new Date(g.vestingStartDate).setMonth(
+              new Date(g.vestingStartDate).getMonth() + (g.cliffMonths || 12)
+            )
+          ).toISOString()
+        : null,
+      vestingEvents: g.vestingEvents,
+    }));
+  }, [grants]);
+
+  const scheduleGrants: GrantEventItem[] = useMemo(() => {
+    return grants.map((g) => ({
+      id: g.id,
+      grantIdentifier: g.grantIdentifier,
+      companyName: g.company?.name || 'Company',
+      grantType: g.grantType,
+      strikePrice: g.strikePrice,
+      currentFmv: g.company?.latestFmvPerShare || 0,
+      vestingEvents: g.vestingEvents,
+    }));
+  }, [grants]);
+
+  const allocationGrants: GrantAllocationItem[] = useMemo(() => {
+    return grants.map((g) => ({
+      id: g.id,
+      companyName: g.company?.name || 'Company',
+      grantType: g.grantType,
+      vestedUnits: g.vestedUnits || 0,
+      currentFmv: g.company?.latestFmvPerShare || 0,
+    }));
+  }, [grants]);
+
+  const tableGrants: GrantTableRow[] = useMemo(() => {
+    return grants.map((g) => ({
+      id: g.id,
+      grantIdentifier: g.grantIdentifier,
+      grantType: g.grantType,
+      companyName: g.company?.name || 'Company',
+      unitsGranted: g.unitsGranted,
+      vestedUnits: g.vestedUnits || 0,
+      percentVested: g.percentVested || 0,
+      strikePrice: g.strikePrice,
+      currentFmv: g.company?.latestFmvPerShare || 0,
+      status: g.status,
+    }));
+  }, [grants]);
+
+  const grantTypes = useMemo(() => {
+    return Array.from(new Set(grants.map((g) => g.grantType)));
+  }, [grants]);
+
+  if (loading) {
+    return (
+      <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="space-y-2 border-b border-rule pb-5">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+        </div>
+        <Skeleton className="h-72 w-full" />
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            Equity Portfolio Dashboard
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-              {grants.length} Active {grants.length === 1 ? 'Grant' : 'Grants'}
-            </span>
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Real-time vesting progression, exercise costs, and FMV valuation models
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={fetchDashboardData}
-            title="Refresh metrics"
-            className="p-2 text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-sm transition-all"
-          >
-            <PlusCircle className="w-4 h-4" />
-            Add New Grant
-          </button>
-        </div>
-      </div>
-
-      {/* Urgent Alert Banner (if any critical tasks like 83(b) or PTEW) */}
-      {urgentTasks.length > 0 && (
-        <div className="bg-amber-950/40 border-l-4 border-amber-500 p-4 rounded-r-xl border-y border-r border-amber-800/40 shadow-xs space-y-2">
-          <div className="flex items-center gap-2 text-amber-300 font-bold text-xs uppercase tracking-wider">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <span>Action Required: Urgent Equity Milestones</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
-            {urgentTasks.map(task => (
-              <div key={task.id} className="flex items-center justify-between bg-slate-900/80 p-2.5 rounded-lg border border-amber-500/30 text-xs">
-                <div>
-                  <div className="font-semibold text-white">{task.title}</div>
-                  <div className="text-[11px] text-slate-400">
-                    Due: {new Date(task.dueDate).toLocaleDateString()} • {task.grant?.company?.name || 'General'}
-                  </div>
-                </div>
-                <Link
-                  href="/actions"
-                  className="px-2.5 py-1 text-[11px] font-bold rounded bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shrink-0"
-                >
-                  Review
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Primary KPI Metrics Grid */}
-      <PortfolioMetricsGrid
-        totalVestedValue={totalVestedValue}
-        netEstimatedEquity={netEstimatedEquity}
-        percentVested={percentVested}
-        totalVested={totalVested}
-        totalGranted={totalGranted}
-        totalUnvested={totalUnvested}
-        totalExerciseCost={totalExerciseCost}
-        nextVestEvent={nextVestEvent}
-      />
-
-      {/* Main Content Area: Timeline Chart + Quick Calculator Callout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Vesting Timeline Chart (2 cols) */}
-        <div className="lg:col-span-2 bg-slate-900/90 rounded-2xl p-6 border border-slate-800 shadow-card space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
-                Cumulative Vesting Timeline
-              </h3>
-              <p className="text-xs text-slate-400">
-                Projected accumulation of vested shares over the 48-month horizon
-              </p>
-            </div>
-            <div className="text-xs font-semibold text-slate-300 bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700">
-              Target: {totalGranted.toLocaleString()} units
-            </div>
-          </div>
-
-          <div className="h-64 w-full pt-4">
-            {timelineData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="vestGradientDark" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                  <XAxis 
-                    dataKey="formattedDate" 
-                    tick={{ fontSize: 11, fill: '#94a3b8' }} 
-                    axisLine={{ stroke: '#334155' }}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 11, fill: '#94a3b8' }} 
-                    axisLine={{ stroke: '#334155' }}
-                    tickLine={false}
-                    tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#0b1120', 
-                      borderRadius: '8px', 
-                      border: '1px solid #1e293b', 
-                      color: '#ffffff',
-                      fontSize: '12px' 
-                    }}
-                    formatter={(value: any) => [`${Number(value).toLocaleString()} units`, 'Vested']}
-                    labelFormatter={(label) => `Month: ${label}`}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="cumulativeVested" 
-                    stroke="#10b981" 
-                    strokeWidth={2.5} 
-                    fillOpacity={1} 
-                    fill="url(#vestGradientDark)" 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-xs text-slate-500">
-                Add grants to render the portfolio vesting progression chart.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Action & Strategy Quick Card (1 col) */}
-        <div className="bg-gradient-to-br from-slate-900 to-slate-850 text-white rounded-2xl p-6 border border-slate-800 shadow-card flex flex-col justify-between space-y-6">
-          <div className="space-y-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-              <Calculator className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold tracking-tight">Interactive Tax Modeling</h3>
-              <p className="text-xs text-slate-300 leading-relaxed mt-1">
-                Calculate ISO Alternative Minimum Tax (AMT) and compare side-by-side scenarios: <em>Exercise & Hold</em> vs <em>Cashless at Exit</em>.
-              </p>
-            </div>
-
-            <div className="bg-slate-800/80 rounded-xl p-3.5 border border-slate-700 text-xs space-y-2">
-              <div className="flex justify-between text-slate-400">
-                <span>Hold Period Strategy:</span>
-                <span className="font-semibold text-emerald-400">Long-Term Cap Gains</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Modeled Exit Valuation:</span>
-                <span className="font-semibold text-white">2.5× to 5× multiple</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Link
-              href="/calculator"
-              className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center gap-1.5 transition-colors shadow-sm"
-            >
-              <span>Launch Equity Calculator</span>
-              <ArrowUpRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/scenarios"
-              className="w-full py-2 px-4 rounded-xl font-medium text-xs bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <span>Explore 83(b) & Scenarios</span>
-            </Link>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Active Grants List */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 shadow-card overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-bold text-white">Your Equity Grants</h3>
-            <p className="text-xs text-slate-400">All registered grants across employers</p>
-          </div>
-          <Link href="/grants" className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-            <span>Manage & Upload Agreements</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {grants.length > 0 ? (
-          <div className="divide-y divide-slate-800 overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold text-[11px]">
-                <tr>
-                  <th className="px-6 py-3">Company & Grant</th>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Units & Vested</th>
-                  <th className="px-4 py-3">Strike Price</th>
-                  <th className="px-4 py-3">Current FMV</th>
-                  <th className="px-4 py-3">Estimated Vested Value</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800 font-medium text-slate-200">
-                {grants.map((grant) => (
-                  <tr key={grant.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-white text-sm">
-                        {grant.company?.name || 'Company'}
-                      </div>
-                      <div className="text-[11px] text-slate-400">
-                        {grant.grantIdentifier}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        grant.grantType === 'ISO' 
-                          ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/60' 
-                          : grant.grantType === 'NSO' 
-                            ? 'bg-blue-950/60 text-blue-300 border border-blue-800/60' 
-                            : 'bg-purple-950/60 text-purple-300 border border-purple-800/60'
-                      }`}>
-                        {grant.grantType}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="font-semibold text-white">
-                        {(grant.vestedUnits || 0).toLocaleString()} / {grant.unitsGranted.toLocaleString()}
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        {grant.percentVested}% vested
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 font-mono">
-                      {grant.grantType === 'RSU' ? '$0.00' : `$${grant.strikePrice.toFixed(2)}`}
-                    </td>
-                    <td className="px-4 py-4 font-mono">
-                      ${grant.company?.latestFmvPerShare?.toFixed(2) || '0.00'}
-                    </td>
-                    <td className="px-4 py-4 font-semibold text-emerald-400">
-                      ${(grant.vestedValue || 0).toLocaleString()}{' '}
-                      <span className="text-[10px] text-slate-400 font-normal">EST.</span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/60 text-emerald-300 border border-emerald-800/60">
-                        {grant.status === 'FULLY_VESTED' ? 'Fully Vested' : 'Vesting'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <Link
-                        href={`/calculator?grant=${grant.id}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-md transition-colors"
-                      >
-                        Model Tax
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          /* Empty State */
-          <div className="p-12 text-center space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto">
-              <Layers className="w-6 h-6" />
-            </div>
-            <div className="max-w-sm mx-auto space-y-1">
-              <h4 className="text-base font-bold text-white">No equity grants added yet</h4>
-              <p className="text-xs text-slate-400">
-                Add your first stock option grant to unlock vesting projections, AMT calculation, and deadline tracking.
-              </p>
-            </div>
+    <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 pb-16">
+      {/* 4.1 PageHeader: Your equity with dynamic summary sentence */}
+      <PageHeader
+        eyebrow="Overview"
+        title="Your equity"
+        contextSentence={contextSentence}
+        actions={
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-xs"
+              type="button"
+              onClick={fetchDashboardData}
+              title="Refresh dashboard metrics"
+              className="p-2 border border-rule rounded-xs bg-surface hover:bg-sunk text-muted hover:text-ink transition-colors"
+              aria-label="Refresh metrics"
             >
-              <PlusCircle className="w-4 h-4" />
-              Add Your First Grant
+              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xs font-sans text-xs font-medium bg-accent text-accent-contrast hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Add grant</span>
             </button>
           </div>
-        )}
-      </div>
+        }
+      />
 
-      {/* Grant Intake Modal */}
+      {/* 4.11 First-run checklist (computed from real data, dismissible) */}
+      <FirstRunChecklist
+        hasGrants={grants.length > 0}
+        hasTaxDefaults={Boolean(taxDefaults?.stateCode)}
+        hasReminders={reminders.length > 0}
+        hasScenarios={hasScenarios}
+        onAddGrantClick={() => setIsModalOpen(true)}
+      />
+
+      {/* 4.2 Needs Attention: Plain rows or calm empty state */}
+      <NeedsAttention reminders={reminders} />
+
+      {/* 4.3 & 4.4 Figure Strip with FMV Multiple Controls (Bug 3 Fixed: unclamped negatives) */}
+      <FigureStrip
+        grants={metricGrants}
+        fmvMultiplier={fmvMultiplier}
+        onMultiplierChange={setFmvMultiplier}
+      />
+
+      {/* 4.5 Vesting Timeline Chart: stacked by grant, today/cliff markers, 12M/All toggle */}
+      <VestingTimelineChart
+        grants={timelineGrants}
+        fmvMultiplier={fmvMultiplier}
+      />
+
+      {/* 4.6 Next 12 months rolling projection + next 10 vest events table */}
+      <ScheduleSection
+        grants={scheduleGrants}
+        fmvMultiplier={fmvMultiplier}
+      />
+
+      {/* 4.7 Equity Allocation bars by company and grant type + neutral concentration notice */}
+      <AllocationSection
+        grants={allocationGrants}
+        fmvMultiplier={fmvMultiplier}
+      />
+
+      {/* 4.8 Grants Table: dense 7-column sortable table linking to /grants/[id] */}
+      <GrantsTable
+        grants={tableGrants}
+        fmvMultiplier={fmvMultiplier}
+      />
+
+      {/* 4.9 Watchlist Strip */}
+      <WatchlistStrip />
+
+      {/* 4.10 Recent Activity (AuditLog readable sentences) and Learn Next */}
+      <ActivityAndLearn
+        auditLogs={auditLogs}
+        grantTypes={grantTypes}
+      />
+
+      {/* 4.12 NextSteps (Preset J2: Cost & Tax -> Scenarios -> Actions) */}
+      <NextSteps preset="J2" title="Recommended next steps" />
+
+      {/* Add Grant Modal */}
       <GrantIntakeModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

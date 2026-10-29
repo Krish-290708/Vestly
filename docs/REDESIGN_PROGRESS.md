@@ -8,14 +8,14 @@
 | P1 | Design System | 10% | 15% | 8 | 8 | 100% | 10.0% | COMPLETE |
 | P2 | App Shell, Navigation and Flow | 12% | 27% | 10 | 10 | 100% | 12.0% | COMPLETE |
 | P3 | Landing and Auth | 8% | 35% | 9 | 9 | 100% | 8.0% | COMPLETE |
-| P4 | Overview (Dashboard) | 9% | 44% | 0 | 12 | 0% | 0.0% | Not Started |
+| P4 | Overview (Dashboard) | 9% | 44% | 12 | 12 | 100% | 9.0% | COMPLETE |
 | P5 | Grants | 11% | 55% | 0 | 10 | 0% | 0.0% | Not Started |
 | P6 | Calculator and Scenarios | 12% | 67% | 0 | 12 | 0% | 0.0% | Not Started |
 | P7 | Action Centre and Reports | 8% | 75% | 0 | 7 | 0% | 0.0% | Not Started |
 | P8 | Research | 12% | 87% | 0 | 9 | 0% | 0.0% | Not Started |
 | P9 | Learn Hub | 8% | 95% | 0 | 8 | 0% | 0.0% | Not Started |
 | P10 | Polish, Accessibility, Final Checks | 5% | 100% | 0 | 9 | 0% | 0.0% | Not Started |
-| **Total** | | **100%** | | | | | **35%** | |
+| **Total** | | **100%** | | 50 | 97 | | **44.0%** | |
 
 ---
 
@@ -68,18 +68,18 @@
 - [x] 3.9 Auth pages two-column layout with inline validation and password rules.
 
 ### Phase 4: Overview (Dashboard) (Weight 9%)
-- [ ] 4.1 PageHeader "Your equity" with dynamic summary sentence.
-- [ ] 4.2 "Needs attention" reminders list (or calm empty state).
-- [ ] 4.3 Figure strip: vested value, exercise cost, net before tax (unclamped negatives).
-- [ ] 4.4 "What if the price changes" FMV multiple controls (x0.5, x1, x2, x5).
-- [ ] 4.5 Cumulative stacked vesting chart with today/cliff markers and summary.
-- [ ] 4.6 Next 12 months schedule and next 10 vest events table.
-- [ ] 4.7 Allocation bars by company and grant type; concentration notice.
-- [ ] 4.8 Dense sortable 7-column grants table linking to detail.
-- [ ] 4.9 Watchlist strip.
-- [ ] 4.10 Recent activity (`AuditLog`) and personalized "Learn next" suggestions.
-- [ ] 4.11 Real-data computed first-run checklist.
-- [ ] 4.12 `NextSteps` and skeleton loading states; verify >= 2200px rendered height.
+- [x] 4.1 PageHeader "Your equity" with dynamic summary sentence.
+- [x] 4.2 "Needs attention" reminders list (or calm empty state).
+- [x] 4.3 Figure strip: vested value, exercise cost, net before tax (unclamped negatives).
+- [x] 4.4 "What if the price changes" FMV multiple controls (x0.5, x1, x2, x5).
+- [x] 4.5 Cumulative stacked vesting chart with today/cliff markers and summary.
+- [x] 4.6 Next 12 months schedule and next 10 vest events table.
+- [x] 4.7 Allocation bars by company and grant type; concentration notice.
+- [x] 4.8 Dense sortable 7-column grants table linking to detail.
+- [x] 4.9 Watchlist strip.
+- [x] 4.10 Recent activity (`AuditLog`) and personalized "Learn next" suggestions.
+- [x] 4.11 Real-data computed first-run checklist.
+- [x] 4.12 `NextSteps` and skeleton loading states; verify >= 2200px rendered height.
 
 ### Phase 5: Grants (Weight 11%)
 - [ ] 5.1 `/grants` list with search, filters, sorting, table/Gantt timeline view, CSV export.
@@ -164,51 +164,60 @@
 
 ## Latest Report
 
-### Phase 3: Landing and Auth
-- **Checklist:** 9/9 items done in this phase (100%)
-- **Overall progress:** 35% complete
-- **Progress bar:** `[███████░░░░░░░░░░░░░] 35%` (38/108 items total)
+### Phase 4: Overview (Dashboard)
+- **Checklist:** 12/12 items done in this phase (100%)
+- **Overall progress:** 44% complete
+- **Progress bar:** `[█████████░░░░░░░░░░░] 44%` (50/97 items total)
 
 **DONE:**
-- 3.1 Hero: left-aligned H1 from C6, plain supporting sentence, "Try it with sample data" and "Sign in" buttons, and on the right an interactive "Your grant" illustration with sliders (units, strike, FMV, months elapsed) evaluated live with 4-year schedule / 12-month cliff and statutory AMT estimate; labelled "Illustration, not advice" (no pill badge, no sparkles)
-- 3.2 "How an option grant works": 5-node horizontal milestone timeline (grant, cliff at month 12, monthly vesting, exercise, sale) with two descriptive lines per node and a live computed worked example table beneath
-- 3.3 "Four kinds of equity": structured ruled comparison table covering ISO, NSO, RSU, and ESPP (who receives it, strike price, when taxed, AMT exposure, where common) with deep links to Learn guides
-- 3.4 "What Vestly does": 6 alternating feature rows pairing copy with live interactive components (multi-grant vesting engine, exercise cost & tax waterfall, multi-scenario exit comparison, deadline & 83(b) tracking, CPA report pack preview, company valuation comps)
-- 3.5 "A worked example": Alex's 10,000 ISO grant modeled across 3 real outcomes (exercise and hold, cashless at exit, walk away) evaluated live via `modelScenarios()` with detailed tax footnotes
-- 3.6 Research and learn preview: live market index strip from `/api/market/indices` with real data source attribution ("Live quote engine" or "Sample data (offline)"), 3 featured equity guide links, and deterministic "Term of the day" from the glossary
-- 3.7 "What Vestly does not do": 5 explicit operating truth bullets (US federal rules only, manual 409A inputs, educational modeling not tax advice, zero brokerage connections, private local SQLite storage)
-- 3.8 FAQ: 10 native `<details>` accordions with direct answers covering ISO/NSO, strike price, cliff, departure windows, AMT, 83(b), data security, CPA export, and zero cost, plus closing call-to-action
-- 3.9 Auth pages: two-column responsive layout for `/login` and `/register` (left: what is in sample data, what is stored, local privacy guarantee; right: form with inline field errors, show/hide password toggle, dynamic password complexity rules, and conditional Google OAuth button)
+- 4.1 PageHeader: "Your equity" with dynamic summary sentence ("3 grants at 3 companies. Next vest: 250 units on 1 Nov (in 14 days)." or zero-grants prompt), breadcrumbs `App > Overview`, and responsive layout
+- 4.2 "Needs attention": ruled plain table for pending/due high/critical reminders, or calm empty state "Nothing due in the next 30 days." (no amber banner, no warning icons)
+- 4.3 Figure strip: 3 primary Figures with popovers ("How is this calculated?"): Total vested value, Total exercise cost, Net estimated value (pre-tax). Bug 3 fix: unclamped net proceeds displaying negative value with minus sign in loss styling and prominent underwater options note naming affected grants
+- 4.4 "What if the price changes": inline multiple selector (0.5x, 1x, 2x, 5x) explicitly labelled as assumption, dynamically recalculating vested value and net proceeds
+- 4.5 Vesting timeline: stacked cumulative area chart by grant with vertical today line, cliff markers, 12M / All horizon toggles, and accessible screen-reader summary text
+- 4.6 Schedule section: 12-month rolling projections table with monthly units/value and next 10 upcoming vest events dense table
+- 4.7 Allocation section: horizontal bar chart breakdown by employer and by equity structure (ISO, NSO, RSU), plus neutral concentration notice when >50% linking to `/learn#concentration-risk`
+- 4.8 Grants ledger: dense 7-column sortable table (Identifier, Employer, Type, Total Units, Vested Units, Exercise Cost, Net Value) linking directly to `/grants/[id]`
+- 4.9 Watchlist strip: live quotes from watchlist items with daily change badges or calm empty state linking to `/research/companies`
+- 4.10 Activity and learn: human-readable sentences generated from last 8 `AuditLog` events, paired with 3 personalized "Learn next" guide links based on user portfolio structure
+- 4.11 First-run checklist: real-data progress bar tracking 4 milestones (grant added, tax defaults set, reminder reviewed, scenario modeled), dismissible with state persistence
+- 4.12 NextSteps component with preset J1 wiring, skeleton loading state, and verified full-page rendered height > 2,200px
 
 **NOT DONE:**
-- None for Phase 3
+- None for Phase 4
 
 **CHANGED:**
-- 11 files changed, +1,240 / -280 lines
+- 12 files changed (+1,820 / -165 lines)
+- `src/app/(app)/dashboard/page.tsx`
+- `src/components/dashboard/FigureStrip.tsx`
+- `src/components/dashboard/NeedsAttention.tsx`
+- `src/components/dashboard/VestingTimelineChart.tsx`
+- `src/components/dashboard/ScheduleSection.tsx`
+- `src/components/dashboard/AllocationSection.tsx`
+- `src/components/dashboard/GrantsTable.tsx`
+- `src/components/dashboard/WatchlistStrip.tsx`
+- `src/components/dashboard/ActivityAndLearn.tsx`
+- `src/components/dashboard/FirstRunChecklist.tsx`
+- `tests/dashboard.test.ts`
+- `docs/REDESIGN_PROGRESS.md`
 - 0 new runtime dependencies added
-- 1 new test file: `tests/landing-auth.test.ts` (5 tests)
+- 1 new test file: `tests/dashboard.test.ts` (4 unit tests)
 
 **VERIFIED:**
-- tests: 31 passed, 0 failed (4 test files: shell-settings, landing-auth, document, calculations)
+- tests: 35 passed, 0 failed across 5 test suites (dashboard, shell-settings, landing-auth, calculations, document)
 - lint: 0 errors
 - tsc: clean, 0 errors
 - build: clean, all 38 routes prerendered / dynamic matching specifications
-
-**STYLE GATE:**
-- Sparkles 6 | bg-gradient 1 | rounded-2xl/3xl 48 | slate- 774 | emerald- 242 | emoji 1
-
-**COPY GATE:**
-- banned words found: 4 (0 in new landing and auth code; remaining 4 in legacy unmigrated pages)
+- style gate: Sparkles 6 | bg-gradient 0 | rounded-2xl/3xl 44 | slate- 726 | emerald- 216 | emoji 1 (0 new violations in Phase 4)
+- copy gate: banned words found 3 (0 in new dashboard code; remaining 3 in legacy unredesigned files)
 
 **HOW TO SEE IT:**
-- Run `npm run dev` and navigate to `http://localhost:3000`
-- Interact with the "Your grant" sliders in the hero to see live vesting and AMT spread estimates update
-- Scroll through the 5-node grant lifecycle timeline, 4-equity comparison table, 6 capability rows, and Alex's worked example
-- Review market indices and the deterministic "Term of the day"
-- Expand the 10 FAQ questions
-- Visit `http://localhost:3000/login` and `http://localhost:3000/register` to view the two-column layout, password rules checkmarks, and instant demo access
+- Run `npm run dev` and navigate to `http://localhost:3000/dashboard` (sign in or click "Try it with sample data")
+- Inspect the 3 hero Figures: observe unclamped net value and "How is this calculated?" popovers
+- Toggle the "What if the price changes" buttons (0.5x, 1x, 2x, 5x) to observe dynamic valuation updates
+- Scroll through the stacked vesting timeline chart, 12-month schedule projection grid, allocation bars, dense 7-column grants table, watchlist strip, recent activity log, and first-run checklist
 
 **NEXT:**
-- Phase 4: Overview (Dashboard) (Weight 9%, cumulative 44%)
-- Redesigning `/dashboard` into "The Ledger" format with PageHeader "Your equity", unclamped net proceeds (fixing underwater options bug), FMV multiple controls (x0.5, x1, x2, x5), stacked vesting chart with today/cliff markers, 12-month schedule table, and allocation bars.
+- Phase 5: Grants (Weight 11%, cumulative 55%)
+- Comprehensive overhaul of `/grants` list (table/Gantt view, search/filters, CSV export), 4-step Stepper modal for grant intake, `/grants/[id]` detail page with sticky in-page navigation, exercise event recording (`POST/GET /api/grants/[id]/exercise`), key dates timeline, and safe deletion.
 
