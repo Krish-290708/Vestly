@@ -108,7 +108,7 @@ export function calculateEquityOutcome(inputs: SimulationInputs): SimulationResu
   const actualUnits = Math.max(0, unitsToExercise);
   const exerciseCost = grantType === 'RSU' ? 0 : actualUnits * strikePrice;
   const grossExitValue = actualUnits * assumedExitPrice;
-  const grossGain = Math.max(0, grossExitValue - exerciseCost);
+  const grossGain = grossExitValue - exerciseCost;
   const exerciseSpread = Math.max(0, actualUnits * (currentFmv - strikePrice));
 
   let ordinaryIncomeTax = 0;
@@ -199,7 +199,7 @@ export function calculateEquityOutcome(inputs: SimulationInputs): SimulationResu
   const totalTaxAtExercise = ordinaryIncomeTax + stateTax + ficaTax + (grantType === 'ISO' ? estimatedAmtLiabilityValue : 0);
   const totalTaxAtExit = capitalGainsTax + stateCapitalGainsTax;
   const totalEstimatedTax = Math.round(totalTaxAtExercise + totalTaxAtExit);
-  const estimatedNetProfit = Math.max(0, Math.round(grossGain - totalEstimatedTax));
+  const estimatedNetProfit = Math.round(grossGain - totalEstimatedTax);
   const effectiveTaxRate = grossGain > 0 ? Math.round((totalEstimatedTax / grossGain) * 1000) / 10 : 0;
 
   return {

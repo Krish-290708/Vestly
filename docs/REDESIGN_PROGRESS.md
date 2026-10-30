@@ -10,12 +10,12 @@
 | P3 | Landing and Auth | 8% | 35% | 9 | 9 | 100% | 8.0% | COMPLETE |
 | P4 | Overview (Dashboard) | 9% | 44% | 12 | 12 | 100% | 9.0% | COMPLETE |
 | P5 | Grants | 11% | 55% | 10 | 10 | 100% | 11.0% | COMPLETE |
-| P6 | Calculator and Scenarios | 12% | 67% | 0 | 12 | 0% | 0.0% | Not Started |
+| P6 | Calculator and Scenarios | 12% | 67% | 12 | 12 | 100% | 12.0% | COMPLETE |
 | P7 | Action Centre and Reports | 8% | 75% | 0 | 7 | 0% | 0.0% | Not Started |
 | P8 | Research | 12% | 87% | 0 | 9 | 0% | 0.0% | Not Started |
 | P9 | Learn Hub | 8% | 95% | 0 | 8 | 0% | 0.0% | Not Started |
 | P10 | Polish, Accessibility, Final Checks | 5% | 100% | 0 | 9 | 0% | 0.0% | Not Started |
-| **Total** | | **100%** | | 60 | 97 | | **55.0%** | |
+| **Total** | | **100%** | | 72 | 97 | | **67.0%** | |
 
 ---
 
@@ -94,18 +94,18 @@
 - [x] 5.10 Safe grant editing (PATCH) and confirmation dialog for deletion.
 
 ### Phase 6: Calculator and Scenarios (Weight 12%)
-- [ ] 6.1 Calculator layout: Assumptions panel (left), Result (right), saved defaults, 50 states + DC tax rates.
-- [ ] 6.2 Contextual glossary definitions on all inputs.
-- [ ] 6.3 Waterfall breakdown and step-by-step formula explanation.
-- [ ] 6.4 Unclamped negative net proceeds handling.
-- [ ] 6.5 Pure calculation functions: `breakEvenExitPrice()`, `amtSensitivity()`, sensitivity table.
-- [ ] 6.6 Compare mode, `SavedScenario` persistence, drawer, export.
-- [ ] 6.7 `/scenarios/strategy` exercise strategies with exit price sliders.
-- [ ] 6.8 `/scenarios/tender` tender-offer modeler with cost basis fix.
-- [ ] 6.9 `/scenarios/83b` dedicated standalone page, countdown, checklist, printable letter.
-- [ ] 6.10 `/scenarios/leaving` departure planning with `planDeparture()` and reminder generation.
-- [ ] 6.11 `/scenarios/dilution` equity dilution modeler with `modelDilution()`.
-- [ ] 6.12 Cross-navigation from Overview and Grants with preselected context.
+- [x] 6.1 Calculator layout: Assumptions panel (left), Result (right), saved defaults, 50 states + DC tax rates.
+- [x] 6.2 Contextual glossary definitions on all inputs.
+- [x] 6.3 Waterfall breakdown and step-by-step formula explanation.
+- [x] 6.4 Unclamped negative net proceeds handling.
+- [x] 6.5 Pure calculation functions: `breakEvenExitPrice()`, `amtSensitivity()`, sensitivity table.
+- [x] 6.6 Compare mode, `SavedScenario` persistence, drawer, export.
+- [x] 6.7 `/scenarios/strategy` exercise strategies with exit price sliders.
+- [x] 6.8 `/scenarios/tender` tender-offer modeler with cost basis fix.
+- [x] 6.9 `/scenarios/83b` dedicated standalone page, countdown, checklist, printable letter.
+- [x] 6.10 `/scenarios/leaving` departure planning with `planDeparture()` and reminder generation.
+- [x] 6.11 `/scenarios/dilution` equity dilution modeler with `modelDilution()`.
+- [x] 6.12 Cross-navigation from Overview and Grants with preselected context.
 
 ### Phase 7: Action Centre and Reports (Weight 8%)
 - [ ] 7.1 Actions views: List, Calendar, Timeline; filters, bulk complete/snooze.
@@ -164,61 +164,68 @@
 
 ## Latest Report
 
-### Phase 5: Grants
-- **Checklist:** 10/10 items done in this phase (100%)
-- **Overall progress:** 55% complete
-- **Progress bar:** `[███████████░░░░░░░░░] 55%` (60/97 items total)
+### Phase 6: Calculator and Scenarios
+- **Checklist:** 12/12 items done in this phase (100%)
+- **Overall progress:** 67% complete
+- **Progress bar:** `[█████████████░░░░░░░] 67%` (72/97 items total)
 
 **DONE:**
-- 5.1 `/grants` list page: `PageHeader` with title "Grants", dynamic summary sentence, search, filters (Type, Status), sort dropdown (Soonest vest date, Units, Vested value, Grant date), view switcher (dense Ledger table vs Gantt timeline view), and RFC 4180 CSV export
-- 5.2 Add/edit grant 4-step Stepper modal: `GrantStepperModal` with Step 0 (Identity & employer context), Step 1 (Units & strike pricing), Step 2 (Schedule & dates), Step 3 (Summary review & live generated tranche preview table via `generateVestingSchedule`)
-- 5.3 `/grants/[id]` detail page: comprehensive Ledger layout with sticky in-page section navigation (`#overview`, `#vesting`, `#valuation`, `#exercise`, `#dates`, `#documents`, `#audit`)
-- 5.4 Summary terms: structured `KeyValueList` presenting derived parameters (grant date, vesting start, expiration, PTEW window, granted units, vested units, unvested units, percent vested, strike, FMV, spread per share, vested exercise cost, total exercise cost, exercisable units)
-- 5.5 Vesting per-grant chart & schedule: `GrantVestingChart` area chart with today line, cliff marker, 12M / Full schedule toggles, screen-reader text, and dense schedule table with status badges and cumulative metrics
-- 5.6 Value modeling at multiples: hero `Figure` strip with popovers ("How is this calculated?") for Total vested value, Total exercise cost, Net estimated value (pre-tax, unclamped negatives with minus sign and loss styling), and Estimated statutory tax liability (AMT spread for ISO, ordinary income spread for NSO), plus FMV multiple selector (`0.5x`, `1x`, `2x`, `5x`)
-- 5.7 Exercise event recording: `POST/GET /api/grants/[id]/exercise` endpoint and `RecordExerciseModal` dialog with statutory disposition selection (holding vs disqualifying), ISO qualifying holding period tracking, early exercise detection triggering 30-day Section 83(b) reminder, and exercise history table
-- 5.8 Key dates timeline: chronological milestones (Grant authorized, Cliff milestone, Next monthly tranche, ISO qualifying disposition, Option expiration) with idempotent "+ Add to Actions" buttons creating persistent `ActionReminder` records
-- 5.9 Secure document management & notes: private authenticated download via `/api/grants/[id]/document`, secure upload via `/api/grants/upload`, editable notes with save confirmation, and `AuditLog` history table
-- 5.10 Safe grant editing & deletion: `PATCH /api/grants/[id]` supporting term updates (with transactional schedule regeneration if units/dates change) and accessible `Dialog` confirmation for safe deletion with cascade warnings
+- 6.1 Calculator layout: two-panel Ledger design with left assumptions panel (grant selector, 50 US states + DC dropdown via `state-rates.ts`, filing status, annual income, FMV multiple quick buttons) and right results panel (hero figure strip, break-even banner, tax breakdown waterfall, sensitivity table, compare mode, save dialog, CSV export)
+- 6.2 Contextual glossary definitions: `<Tooltip>` on every calculator input (strike price, FMV, exit price, filing status, state, annual income) explaining what the field means and how it affects results
+- 6.3 Waterfall breakdown: `TaxBreakdownCard` rewritten to Ledger design with ruled rows (Gross proceeds → Strike cost → Gross pre-tax gain → Taxes at exercise → Taxes at sale → Net estimated proceeds), `money()`/`percent()` formatting, formula explanations in footnotes
+- 6.4 Unclamped negative net proceeds: removed `Math.max(0, ...)` from `grossGain` in `taxes.ts`, `estimatedNetProfit` in `taxes.ts`, `netCashReceived` in `modelScenarios()`, and `netCashPayout` in `calculateTenderOffer()` (Bug 3 fix); negative values styled with loss colour
+- 6.5 Pure calculation functions: `breakEvenExitPrice()` with AMT/NSO tax awareness, `amtSensitivity()` generating 8-point grid across FMV multiples, sensitivity table rendering in calculator; fixed `estimateAmtLiability()` argument order
+- 6.6 Compare mode with side-by-side table, `SavedScenario` persistence via `POST/GET/DELETE /api/scenarios`, save dialog, RFC 4180 CSV export
+- 6.7 `/scenarios/strategy`: exercise strategy comparison with 3-column grid (Exercise & Hold, Cashless at Exit, Let Expire), exit price slider, grant context selector, save scenario
+- 6.8 `/scenarios/tender`: tender-offer modeler with participation slider, transaction fee, settlement waterfall table, IPO opportunity cost comparison, cost basis fix in `calculateTenderOffer()`
+- 6.9 `/scenarios/83b`: deadline countdown banner, tax savings comparison table (with vs without 83(b)), IRS filing protocol checklist, printable election letter dialog with taxpayer fields, "Add to Actions" reminder creation
+- 6.10 `/scenarios/leaving`: departure planning with PTEW presets, cash budget optimization, key dates strip, ISO 90-day conversion warnings, unvested forfeit warnings, affordability table, recommended departure actions, batch reminder creation
+- 6.11 `/scenarios/dilution`: multi-round dilution modeler with editable round cards (name, investment, pre-money, pool expansion), summary figure strip (starting/final ownership, value growth, cumulative dilution), progression table, add/remove rounds
+- 6.12 Cross-navigation: `/calculator?grant=` query param preserved for deep links from dashboard and grants detail; `/scenarios` hub links to all 5 sub-pages with preselected context
 
 **NOT DONE:**
-- None for Phase 5
+- None for Phase 6
 
 **CHANGED:**
-- 11 files changed (+2,050 / -340 lines)
-- `src/app/(app)/grants/page.tsx`
-- `src/app/(app)/grants/[id]/page.tsx`
-- `src/app/api/grants/[id]/route.ts`
-- `src/app/api/grants/[id]/exercise/route.ts`
-- `src/components/grants/GrantStepperModal.tsx`
-- `src/components/grants/GrantIntakeModal.tsx`
-- `src/components/grants/RecordExerciseModal.tsx`
-- `src/components/grants/GrantsGanttView.tsx`
-- `src/components/grants/GrantVestingChart.tsx`
-- `tests/grants.test.ts`
+- 15 files changed (+3,400 / -200 lines)
+- `src/lib/tax/state-rates.ts` (new)
+- `src/lib/calculations/scenarios.ts` (modified: 4 new functions, bug fixes)
+- `src/lib/calculations/taxes.ts` (modified: unclamped negatives)
+- `src/app/api/scenarios/route.ts` (new)
+- `src/app/api/scenarios/[id]/route.ts` (new)
+- `src/app/(app)/calculator/page.tsx` (rewritten)
+- `src/app/(app)/scenarios/page.tsx` (rewritten)
+- `src/app/(app)/scenarios/strategy/page.tsx` (new)
+- `src/app/(app)/scenarios/tender/page.tsx` (new)
+- `src/app/(app)/scenarios/83b/page.tsx` (new)
+- `src/app/(app)/scenarios/leaving/page.tsx` (new)
+- `src/app/(app)/scenarios/dilution/page.tsx` (new)
+- `src/components/calculator/TaxBreakdownCard.tsx` (rewritten)
+- `tests/scenarios.test.ts` (new: 9 unit tests)
 - `docs/REDESIGN_PROGRESS.md`
 - 0 new runtime dependencies added
-- 1 new test file: `tests/grants.test.ts` (6 unit tests)
 
 **VERIFIED:**
-- tests: 41 passed, 0 failed across 6 test suites (`tests/grants.test.ts`, `tests/dashboard.test.ts`, `tests/shell-settings.test.ts`, `tests/landing-auth.test.ts`, `tests/calculations.test.ts`, `tests/document.test.ts`)
-- lint: 0 errors
+- tests: 50 passed, 0 failed across 7 test suites
 - tsc: clean, 0 errors
-- build: clean, all routes prerendered / dynamic matching specifications
-- style gate: Sparkles 4 | bg-gradient 0 | rounded-2xl/3xl 41 | slate- 605 | emerald- 177 | emoji 1 (legacy tokens reduced further; zero violations in new Phase 5 code)
-- copy gate: banned words found 3 (0 in new grants code; remaining 3 in legacy unmigrated files)
+- build: clean, all 44 static pages + dynamic routes compiled
+- style gate: Sparkles 4 | bg-gradient 0 | rounded-2xl/3xl 34 | slate- 445 | emerald- 126 | emoji 1 (legacy tokens reduced from Phase 5; zero violations in new Phase 6 code)
+- copy gate: banned words found 2 (0 in new calculator/scenarios code; remaining 2 in legacy unmigrated files)
 
 **HOW TO SEE IT:**
-- Run `npm run dev` and navigate to `http://localhost:3000/grants`
-- Test search, Type filter (ISO, NSO, RSU), Status filter, and sort options
-- Toggle between Table view and Timeline view to see the Gantt visualization with cliff and today markers
-- Click "+ Record grant" to open the 4-step Stepper modal, step through terms, and see live generated schedule preview
-- Click "Details" or a grant row to visit `/grants/[id]`
-- Use the sticky in-page navigation to jump across Overview, Vesting, Valuation modeling, Exercise history, Key dates, Documents, and Audit trail
-- Adjust FMV multiples (`0.5x`, `1x`, `2x`, `5x`) and observe unclamped net value and "How is this calculated?" popovers
-- Click "Record exercise" to open the exercise modal and test holding period vs disqualifying disposition calculations
+- Run `npm run dev` and navigate to `http://localhost:3000/calculator`
+- Select a grant, adjust state, filing status, annual income, exit price, and FMV multiple quick buttons
+- Observe the waterfall breakdown in `TaxBreakdownCard`, sensitivity table, and break-even banner
+- Toggle Compare mode and save scenarios via the save dialog
+- Export results as CSV
+- Navigate to `http://localhost:3000/scenarios` to see the hub with 5 modeler cards
+- Visit `/scenarios/strategy` to compare Exercise & Hold vs Cashless vs Let Expire
+- Visit `/scenarios/tender` to model a tender offer with participation slider
+- Visit `/scenarios/83b` to see the deadline countdown, tax comparison, and printable letter
+- Visit `/scenarios/leaving` to plan departure with PTEW presets and ISO conversion warnings
+- Visit `/scenarios/dilution` to model multi-round venture financing dilution
 
 **NEXT:**
-- Phase 6: Calculator and Scenarios (Weight 12%, cumulative 67%)
-- Redesigning `/calculator` and `/scenarios` into "The Ledger" layout (Assumptions panel left, Result right, waterfall breakdown, unclamped negative net proceeds, `breakEvenExitPrice()`, `amtSensitivity()`, strategy modeler, tender-offer modeler with cost basis fix, dedicated standalone `/scenarios/83b` page, departure planning `/scenarios/leaving`, dilution modeler `/scenarios/dilution`).
+- Phase 7: Action Centre and Reports (Weight 8%, cumulative 75%)
+- Redesigning `/actions` into list/calendar/timeline views with filters, bulk complete/snooze, side-panel checklists, `.ics` export; 4 report types (Portfolio summary, Grant ledger, Tax-year report, Advisor pack) with clean print styling and CSV downloads.
 
