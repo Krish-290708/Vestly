@@ -44,3 +44,5 @@ prisma/*.db-journal
 storage/
 .redesign/
 audit/
+
+.vscode/
