@@ -467,6 +467,7 @@ export default function CalculatorPage() {
 
             {/* Assumed Exit Price & Quick Multiples */}
             <Field
+              id="assumed-exit-price"
               label={
                 <span className="flex items-center gap-1.5">
                   Assumed exit price ($/sh)
@@ -478,6 +479,8 @@ export default function CalculatorPage() {
             >
               <div className="space-y-2">
                 <Input
+                  id="assumed-exit-price"
+                  aria-label="Assumed exit price ($/sh)"
                   type="number"
                   min="0.01"
                   step="0.01"
@@ -611,10 +614,12 @@ export default function CalculatorPage() {
               {/* Scenario B Controls */}
               <div className="p-3 bg-[var(--surface-muted)] border border-[var(--rule)] grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--ink-muted)] block mb-1">
+                  <label htmlFor="compare-exit-price" className="text-[11px] font-medium text-[var(--ink-muted)] block mb-1">
                     Scenario B Exit Price ($/sh):
                   </label>
                   <Input
+                    id="compare-exit-price"
+                    aria-label="Scenario B exit price ($/sh)"
                     type="number"
                     step="0.50"
                     value={compareExitPrice}
@@ -622,10 +627,12 @@ export default function CalculatorPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--ink-muted)] block mb-1">
+                  <label htmlFor="compare-holding-period" className="text-[11px] font-medium text-[var(--ink-muted)] block mb-1">
                     Scenario B Holding Period:
                   </label>
                   <Select
+                    id="compare-holding-period"
+                    aria-label="Scenario B holding period"
                     value={compareHoldingPeriod}
                     onChange={(e) => setCompareHoldingPeriod(e.target.value as any)}
                   >

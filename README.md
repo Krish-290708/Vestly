@@ -1,76 +1,82 @@
-# Vestly — Institutional-Grade ESOP Management & Market Research Platform
+# Vestly — Equity Management & Scenario Modeling Platform
 
+> **Design Direction**: "The Ledger" — Quiet, printed, precise financial statement aesthetic. Numbers are heroes.  
 > 🌐 **Local Web Application**: **[http://localhost:3000](http://localhost:3000)**  
-> ⚡ **1-Click Launch**: Run `python Vestly.py` or `npm run dev`
+> ⚡ **Launch**: Run `python Vestly.py` or `npm run dev`
 
-**Vestly** is a financial web application engineered to help startup and corporate employees understand, calculate, manage, and take strategic action on their Employee Stock Ownership Plan (ESOP) grants.
+**Vestly** is a financial web application engineered to help startup employees understand, model, calculate, and take strategic action on their stock options (ISOs and NSOs), Restricted Stock Units (RSUs), and Employee Stock Purchase Plans (ESPPs).
 
-Vestly balances two core pillars:
-1. **The Utility**: A personal multi-grant vesting engine, Alternative Minimum Tax (AMT) calculator, Section 83(b) / PTEW deadline manager, and secondary market tender offer modeler.
-2. **The Context**: A market research hub featuring live indices, private unicorn 409A valuations, market news via Finnhub, and plain-language equity guides.
-
-Accuracy, clarity, and trust matter more than flashy design. Every number involving assumptions is visually badged as an `ESTIMATE` with persistent statutory disclaimers.
+Accuracy, clarity, and mathematical precision take precedence over flashy visuals. Numbers are displayed in full monospace with tabular alignment, negative net values are never clamped to zero, and all figures carry explicit calculation notes and statutory disclaimers.
 
 ---
 
-## Key Modules & Features
+## Key Modules
 
-### 1. Multi-Grant Intake & Dashboard
-- **Guided Intake Wizard**: Record ISOs, NSOs, RSUs, and ESPPs with strike price, grant date, commencement date, 1-year cliff, and custom vesting schedules.
-- **Single-Screen Portfolio KPI Overview**: Total granted units, total vested units, estimated vested value at latest 409A FMV, and total cost to exercise all vested options.
-- **Visual Vesting Timeline**: Cumulative 48-month projection curve rendered with Recharts.
-- **Grant Agreement Storage**: Upload and store original grant notices and offer letters (PDF/PNG).
-- **Plain-Language Statuses**: Clearly flagged as *Vesting*, *Fully Vested*, *Expiring Soon*, or *Exercised*.
+### 1. Overview & Dashboard (`/dashboard`)
+- **FigureStrip**: Hero KPI strip featuring vested value, exercise capital required, and pre-tax net proceeds with unclamped negative handling.
+- **Vesting Progression**: Cumulative 48-month projection curve with today's marker and 1-year cliff indicator.
+- **Schedule**: 12-month calendar horizon and next 10 vesting events breakdown table.
+- **Concentration Analysis**: Allocation bars by company and equity instrument type.
 
-### 2. Interactive ESOP & AMT Tax Calculator
-- **Mathematical Tax Engine**:
-  - **ISOs**: Models paper spread at exercise as an Alternative Minimum Tax (AMT) preference item (IRC Section 56), computes AMTI exemptions and phaseouts, and distinguishes between Qualifying and Disqualifying dispositions.
-  - **NSOs**: Treats spread at exercise as ordinary compensation wages subject to federal, state, and FICA/Medicare payroll withholdings.
-  - **RSUs**: Models 100% of fair market value at vesting date as ordinary income.
-- **Dynamic Controls**: Toggle federal tax brackets (24%–37%), state tax rates (CA, NY, WA, TX, etc.), filing status (Single vs MFJ), and holding periods (Short-term vs Long-term).
+### 2. Grants Ledger & Intake (`/grants` & `/grants/[id]`)
+- **Dense Ruled Table**: 7-column sortable ledger of all active, exercised, and unvested grants.
+- **4-Step Intake Stepper**: Guided grant intake modal with transactional database integrity (`prisma.$transaction`).
+- **Grant Detail View**: Sticky in-page navigation, derived terms, exercise history, and timeline.
+- **Secure Document Pipeline**: Upload and serve original grant notices from private storage (`storage/uploads/<userId>/`).
 
-### 3. Scenario Planning & Section 83(b) Decision Engine
-- **Side-by-Side Strategy Modeling**: Compare *Exercise Now & Hold* vs *Cashless Exercise at Exit* vs *Do Not Exercise / Expire* across net take-home, upfront capital risk, and effective tax rates.
-- **IRS Section 83(b) Helper**: Calculates the strict 30-calendar-day postmark deadline, forecasts tax savings on early exercise, and generates a ready-to-mail certified IRS Section 83(b) election letter.
+### 3. Interactive Tax & ESOP Calculator (`/calculator`)
+- **Side-by-Side Analysis**: Assumptions panel (left) and step-by-step mathematical result waterfall (right).
+- **Alternative Minimum Tax (AMT)**: Models tentative minimum tax under IRC Section 55 & 56, computing AMTI exemptions, phaseouts, and dual-bracket rates.
+- **50 States + DC**: State income tax and capital gains brackets across all US jurisdictions.
+- **Compare Mode**: Side-by-side evaluation of two exit valuations and holding periods.
 
-### 4. Action Center & Audit Trail
-- **Milestone Deadlines**: Proactive notifications for vesting tranches, 90-day post-termination exercise windows (PTEW), and 10-year option expirations.
-- **Action Controls**: Mark milestones as *Exercised*, *Sold*, *Completed*, or *Snooze 14 Days*.
-- **Immutable Audit Log**: Historical log capturing every action taken per grant.
+### 4. Scenario Planning Engines (`/scenarios/*`)
+- **Exercise Strategy (`/scenarios/strategy`)**: Compare *Exercise & Hold* vs *Cashless Exercise at Exit* vs *Expire* across net proceeds and capital risk.
+- **Secondary Tender Offer (`/scenarios/tender`)**: Model company-sponsored tender sales with correct cost basis allocation and tax withholdings.
+- **Section 83(b) Election (`/scenarios/83b`)**: 30-day postmark countdown, tax savings analysis, and auto-generated ready-to-mail IRS election letter.
+- **Departure Planning (`/scenarios/leaving`)**: 90-day vs extended 10-year post-termination exercise windows (PTEW) and ISO-to-NSO conversion tracking.
+- **Venture Dilution (`/scenarios/dilution`)**: Model cap table dilution across Seed through Series D rounds with option pool reserves.
 
-### 5. CPA & Financial Advisor Report
-- **Clean Printable View**: Formatted specifically for tax advisors and wealth managers (`@media print` optimized).
-- Includes portfolio aggregate totals, individual grant schedules, and tax preparation notes for IRS Forms 8801 and 1040.
+### 5. Action Centre & Reports (`/actions` & `/reports`)
+- **Multiple Views**: Operational List, Calendar, Timeline, and immutable Audit Log.
+- **Bulk Operations**: Bulk mark completed, snooze (7, 14, 30 days), and export.
+- **Calendar Sync**: RFC 5545 `.ics` iCalendar export for Google Calendar, Apple Calendar, and Outlook.
+- **Advisor Pack Reports**: 4 clean print-styled financial statements optimized for tax preparers and wealth advisors.
 
-### 6. Research & Learn Hub
-- **Market Overview**: Major index tracking (S&P 500, Nasdaq, Dow Jones, Russell 2000) and sector momentum snapshots.
-- **Company Explorer**: Searchable directory of private tech unicorns (Stripe, Databricks, Figma, Canva) and public leaders (Apple, NVIDIA) with 409A trajectories and funding histories.
-- **Employer Cross-Linking**: Automatically links company profiles to your active stock grants.
-- **Live News Feed**: Market and tech news via Finnhub API with category filters and outbound source links.
-- **Education Center**: 7 short, skimmable explainer guides covering ISOs, NSOs, RSUs, 409A valuations, vesting cliffs, and AMT.
-- **Equity Glossary**: Interactive search across 30+ financial terms.
-- **Watchlist**: Follow employer or target companies to track valuation updates.
+### 6. Learn Hub (`/learn`)
+- **24 Educational Guides**: Clear financial reference articles covering equity foundations, taxation, liquidity, and legal rights.
+- **Equity Glossary (`/learn/glossary`)**: Alphabetical index of 84 defined terms with A–Z jump navigation and `#slug` anchors.
+- **Inline `<Term>` Component**: Interactive hover tooltips providing instant definitions throughout the application.
+- **Offer Checklist (`/learn/checklist`)**: 10-point diligence framework for evaluating startup equity offers before signing.
+- **Equity Quiz (`/learn/quiz`)**: 10-question self-assessment testing practical understanding of AMT, PTEW, and dilution.
+
+### 7. Research Hub (`/research/*` & `/pool`)
+- **Market Benchmarks (`/research/market`)**: Major indices (S&P 500, Nasdaq, Dow Jones, Russell 2000) and sector ETF performance with 5-second API timeouts and offline fallbacks.
+- **Verified Companies (`/research/companies`)**: Directory of private tech unicorns (Stripe, Databricks, Figma, Canva) with funding history and 409A trajectories.
+- **Company Comparison (`/research/compare`)**: Side-by-side comparison matrix across valuation, 409A marks, and option pool sizing.
+- **Option Pool Modeler (`/pool`)**: Department allocations and 8-quarter depletion runway forecasting.
 
 ---
 
 ## Tech Stack & Architecture
 
-- **Frontend**: Next.js 14+ (App Router), React 18, TypeScript, Tailwind CSS, Lucide React icons.
-- **Visualizations**: Recharts for responsive area and line charts.
-- **Database**: SQLite with Prisma ORM (zero-config, typed relational models for `User`, `Company`, `Grant`, `VestingEvent`, `ActionReminder`, `AuditLog`, `WatchlistItem`).
-- **Auth**: JWT session cookies with bcrypt password hashing + One-Click Demo Mode (`demo@vestly.app`).
-- **Market Data APIs**: Server-side Finnhub integration with in-memory TTL caching and high-fidelity offline fallbacks.
+- **Framework**: Next.js 14 (App Router), React 18, TypeScript 5.
+- **Styling**: Tailwind CSS with custom CSS variables for light ("Paper") and dark ("Ledger") themes.
+- **Database**: SQLite with Prisma ORM (ACID transactional integrity).
+- **Icons**: Lucide React.
+- **Charts**: Recharts with flat theme reading CSS variables.
+- **Testing & Quality**: Vitest, Playwright, `@axe-core/playwright`, custom style and copy gate scanners.
 
 ---
 
-## Quick Start & Running Locally
+## Getting Started
 
 ### 1. Prerequisites
 - Node.js 18+ installed
 
-### 2. Installation
+### 2. Installation & Database Setup
 ```bash
-# Clone or navigate to the directory
+# Clone or navigate to the repository
 cd ESOPs
 
 # Install dependencies
@@ -84,7 +90,7 @@ node prisma/seed.js
 
 ### 3. Launch Development Server
 ```bash
-# Option A: 1-Click Python Launcher (automatically verifies DB and opens browser)
+# Option A: Python launcher (verifies DB and opens browser)
 python Vestly.py
 
 # Option B: Standard NPM command
@@ -92,60 +98,38 @@ npm run dev
 ```
 Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
-### 4. Explore Instantly
-Click **"Explore with Demo Account"** on the landing page or login screen to immediately test Vestly with realistic pre-loaded grants:
-- **Stripe** (ISO: 12,000 units @ $8.50 strike, $26.50 409A)
-- **Databricks** (NSO: 4,000 units @ $45.00 strike, $73.50 409A)
-- **Figma** (RSU: 2,400 units, $32.00 409A)
+### 4. Sample Account
+Click **"Try with sample data"** on the landing page or login screen to immediately test Vestly with realistic pre-loaded grants (Stripe ISO, Databricks NSO, Figma RSU).
 
 ---
 
-## Environment Variables & API Keys
-
-Create a `.env` file from `.env.example`:
+## Quality & Verification Gates
 
 ```bash
-DATABASE_URL="file:./dev.db"
-JWT_SECRET="your_secure_secret_key_here"
+# Run full Vitest test suite (69 tests across 10 suites)
+npm test
 
-# Finnhub API Key (Free tier: 60 calls/min)
-# Get a free key at: https://finnhub.io/
-FINNHUB_API_KEY=""
+# Run TypeScript typecheck
+npx tsc --noEmit
 
-# Alpha Vantage API Key (Free tier: 25 requests/day)
-ALPHA_VANTAGE_API_KEY=""
+# Run Next.js production build (71 routes)
+npm run build
+
+# Run Copy Gate audit (enforces 0 banned buzzwords)
+npm run check:copy -- --report
+
+# Run Style Gate audit (enforces 0 sparkles, 0 gradients)
+npm run check:style
+
+# Run WCAG AA accessibility audit (100% clean across 16 views)
+node scripts/audit-accessibility.mjs
+
+# Run Content volume & page height audit
+node scripts/verify-content-height.mjs
 ```
-
-> **Note**: If `FINNHUB_API_KEY` is left blank, Vestly operates in resilient offline mode using verified fallback snapshots and indicators so you can test all features without mandatory API sign-ups.
 
 ---
 
-## Containerized Deployment (Docker & Compose)
+## Regulatory & Legal Disclaimer
 
-Vestly includes a multi-stage Alpine Dockerfile and Docker Compose orchestration setup:
-
-```bash
-# Build and run with Docker Compose (includes persistent database & upload volumes)
-docker compose up -d
-
-# Check container health and status
-docker compose ps
-docker compose logs -f
-
-# Run standalone container
-docker build -t vestly:latest .
-docker run -p 3000:3000 --env-file .env vestly:latest
-```
-
-The container includes:
-- Automated health monitoring (`/api/health`)
-- Non-root user execution (`nextjs:nodejs`)
-- Automatic database push and seed initialization on first launch
-- Persistent volume mappings for SQLite database and uploaded grant agreements
-
----
-
-## Compliance & Legal Disclaimer
-
-Vestly provides mathematical estimates for educational and scenario planning purposes only. It does not provide financial, investment, legal, or tax advice. Equity compensation taxation is complex and depends on household income, deductions, state residence, and AMT phaseouts. Always consult a licensed CPA or tax attorney before exercising options or making financial commitments.
-
+Vestly provides mathematical estimates for educational and scenario planning purposes only. It does not provide legal, tax, or investment advice. Federal and state tax laws, Alternative Minimum Tax thresholds, and corporate securities regulations vary by jurisdiction and individual filing status. Always consult a licensed Certified Public Accountant (CPA) or tax attorney before exercising options or making tax elections.

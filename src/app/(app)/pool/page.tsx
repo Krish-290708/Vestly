@@ -61,6 +61,7 @@ export default function PoolPage() {
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted">Preset:</span>
             <select
+              aria-label="Select company preset"
               value={selectedPresetId}
               onChange={(e) => handleSelectPreset(e.target.value)}
               className="px-2.5 py-1.5 border border-rule rounded-sm bg-surface text-ink text-xs focus:ring-1 focus:ring-accent focus:outline-none"

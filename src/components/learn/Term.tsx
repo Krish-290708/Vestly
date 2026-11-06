@@ -49,7 +49,7 @@ export function Term({ term, children }: TermProps) {
         type="button"
         onClick={() => setOpen(!open)}
         className="border-b border-dotted border-muted/80 hover:border-ink hover:text-ink cursor-help font-medium transition-colors text-left inline"
-        aria-label={`Definition of ${found.term}`}
+        title={found.shortDefinition}
       >
         {displayText}
       </button>

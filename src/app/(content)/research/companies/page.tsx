@@ -128,6 +128,7 @@ export default function CompaniesPage() {
         />
 
         <select
+          aria-label="Filter companies by sector"
           value={sectorFilter}
           onChange={(e) => setSectorFilter(e.target.value)}
           className="px-2.5 py-1.5 border border-rule rounded-sm bg-surface text-ink text-xs focus:ring-1 focus:ring-accent focus:outline-none"
@@ -139,6 +140,7 @@ export default function CompaniesPage() {
         </select>
 
         <select
+          aria-label="Filter companies by public or private status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as any)}
           className="px-2.5 py-1.5 border border-rule rounded-sm bg-surface text-ink text-xs focus:ring-1 focus:ring-accent focus:outline-none"

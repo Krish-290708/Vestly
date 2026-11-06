@@ -34,7 +34,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
         aria-valuenow={Math.round(percentage)}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label={label}
+        aria-label={label || 'Vesting progress'}
         className="w-full h-1.5 bg-sunk rounded-sm overflow-hidden border border-rule/50"
       >
         <div

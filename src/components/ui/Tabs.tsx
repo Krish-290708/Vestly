@@ -65,7 +65,6 @@ export const Tabs: React.FC<TabsProps> = ({
             role="tab"
             id={`tab-${tab.id}`}
             aria-selected={isActive}
-            aria-controls={`panel-${tab.id}`}
             tabIndex={isActive ? 0 : -1}
             disabled={tab.disabled}
             onClick={() => onChange(tab.id)}

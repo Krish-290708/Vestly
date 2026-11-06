@@ -409,6 +409,7 @@ export default function ActionCentrePage() {
       {/* Filters row */}
       <div className="flex flex-wrap items-center gap-3 text-xs">
         <select
+          aria-label="Filter by action status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as any)}
           className="px-2.5 py-1.5 border border-rule rounded-sm bg-surface text-ink text-xs focus:ring-1 focus:ring-accent focus:outline-none"
@@ -419,6 +420,7 @@ export default function ActionCentrePage() {
         </select>
 
         <select
+          aria-label="Filter by urgency"
           value={urgencyFilter}
           onChange={(e) => setUrgencyFilter(e.target.value)}
           className="px-2.5 py-1.5 border border-rule rounded-sm bg-surface text-ink text-xs focus:ring-1 focus:ring-accent focus:outline-none"
@@ -431,6 +433,7 @@ export default function ActionCentrePage() {
         </select>
 
         <select
+          aria-label="Filter by action type"
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
           className="px-2.5 py-1.5 border border-rule rounded-sm bg-surface text-ink text-xs focus:ring-1 focus:ring-accent focus:outline-none"

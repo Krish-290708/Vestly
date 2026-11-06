@@ -143,7 +143,7 @@ export function ScheduleSection({
               className={`p-2.5 rounded-xs border ${
                 m.units > 0
                   ? 'border-rule bg-sunk/30'
-                  : 'border-rule/50 bg-paper/40 opacity-70'
+                  : 'border-rule/40 bg-paper/20'
               } space-y-1`}
             >
               <span className="text-[10px] font-mono text-muted uppercase block">

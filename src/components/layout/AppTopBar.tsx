@@ -169,7 +169,6 @@ export function AppTopBar({ onOpenSearch, onOpenMobileMenu }: AppTopBarProps) {
           type="button"
           onClick={onOpenSearch}
           className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted hover:text-ink border border-rule rounded-xs bg-surface hover:bg-sunk/40 transition-colors shadow-2xs font-sans"
-          aria-label="Search or jump to"
         >
           <Search className="w-3.5 h-3.5" />
           <span className="text-[11px]">Search...</span>
@@ -209,7 +208,7 @@ export function AppTopBar({ onOpenSearch, onOpenMobileMenu }: AppTopBarProps) {
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             aria-expanded={isUserMenuOpen}
             aria-haspopup="true"
-            aria-label="User account menu"
+            title="User account menu"
             className="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-xs hover:bg-sunk transition-colors border border-transparent hover:border-rule"
           >
             <div className="w-6 h-6 rounded-xs bg-sunk border border-rule flex items-center justify-center text-[11px] font-mono font-semibold text-accent uppercase">

@@ -267,6 +267,7 @@ export default function GrantsPage() {
           {/* Type Filter */}
           <div className="w-28">
             <Select
+              aria-label="Filter grants by equity type"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               className="text-xs"
@@ -283,6 +284,7 @@ export default function GrantsPage() {
           {/* Status Filter */}
           <div className="w-32">
             <Select
+              aria-label="Filter grants by vesting status"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="text-xs"
@@ -299,6 +301,7 @@ export default function GrantsPage() {
           {/* Sort */}
           <div className="w-40">
             <Select
+              aria-label="Sort grants by"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="text-xs"

@@ -83,7 +83,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <ToastContext.Provider value={{ showToast, dismissToast, toast }}>
       {children}
-      <div
+      <section
+        role="region"
         aria-live="polite"
         aria-label="Notifications"
         className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"
@@ -125,7 +126,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
             </button>
           </div>
         ))}
-      </div>
+      </section>
     </ToastContext.Provider>
   );
 };

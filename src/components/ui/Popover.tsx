@@ -56,14 +56,15 @@ export const Popover: React.FC<PopoverProps> = ({
 
   return (
     <div ref={containerRef} className="relative inline-block">
-      <div
+      <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
-        aria-haspopup="true"
-        className="cursor-pointer inline-flex items-center"
+        aria-haspopup="dialog"
+        className="cursor-pointer inline-flex items-center bg-transparent border-0 p-0 text-inherit font-inherit text-left"
       >
         {trigger}
-      </div>
+      </button>
 
       {isOpen && (
         <div
