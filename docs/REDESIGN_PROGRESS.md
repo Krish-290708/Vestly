@@ -13,9 +13,9 @@
 | P6 | Calculator and Scenarios | 12% | 67% | 12 | 12 | 100% | 12.0% | COMPLETE |
 | P7 | Action Centre and Reports | 8% | 75% | 7 | 7 | 100% | 8.0% | COMPLETE |
 | P8 | Research | 12% | 87% | 9 | 9 | 100% | 12.0% | COMPLETE |
-| P9 | Learn Hub | 8% | 95% | 0 | 8 | 0% | 0.0% | Not Started |
+| P9 | Learn Hub | 8% | 95% | 8 | 8 | 100% | 8.0% | COMPLETE |
 | P10 | Polish, Accessibility, Final Checks | 5% | 100% | 0 | 9 | 0% | 0.0% | Not Started |
-| **Total** | | **100%** | | 88 | 97 | | **87.0%** | |
+| **Total** | | **100%** | | 96 | 97 | | **95.0%** | |
 
 ---
 
@@ -128,14 +128,14 @@
 - [x] 8.9 Logged-out access and responsive verification.
 
 ### Phase 9: Learn Hub (Weight 8%)
-- [ ] 9.1 Learn index with search, starter guide, and 5 learning paths.
-- [ ] 9.2 Article reader `/learn/[slug]` with reading progress, takeaways, tool links.
-- [ ] 9.3 24 comprehensive markdown articles covering core equity topics.
-- [ ] 9.4 Verified calculations in examples tested via Vitest.
-- [ ] 9.5 Glossary with 80+ terms and A-Z index.
-- [ ] 9.6 Inline `<Term>` component with hover definitions.
-- [ ] 9.7 Offer evaluation checklist tool.
-- [ ] 9.8 10-question equity knowledge quiz.
+- [x] 9.1 Learn index with search, starter guide, and 5 learning paths.
+- [x] 9.2 Article reader `/learn/[slug]` with reading progress, takeaways, tool links.
+- [x] 9.3 24 comprehensive markdown articles covering core equity topics.
+- [x] 9.4 Verified calculations in examples tested via Vitest.
+- [x] 9.5 Glossary with 80+ terms and A-Z index.
+- [x] 9.6 Inline `<Term>` component with hover definitions.
+- [x] 9.7 Offer evaluation checklist tool.
+- [x] 9.8 10-question equity knowledge quiz.
 
 ### Phase 10: Polish, Accessibility, Final Checks (Weight 5%)
 - [ ] 10.1 Full WCAG AA audit with `@axe-core/playwright`; keyboard walkthrough of J1-J3.
@@ -164,60 +164,56 @@
 
 ## Latest Report
 
-### Phase 8: Research
-- **Checklist:** 9/9 items done in this phase (100%)
-- **Overall progress:** 87% complete
-- **Progress bar:** `[█████████████████░░░] 87%` (88/97 items total)
+### Phase 9: Learn Hub
+- **Checklist:** 8/8 items done in this phase (100%)
+- **Overall progress:** 95% complete
+- **Progress bar:** `[███████████████████░] 95%` (96/97 items total)
 
 **DONE:**
-- 8.1 Markets overview (`/research/market`): Ruled index benchmark table (S&P 500, Nasdaq, Dow Jones, Russell 2000), sector ETF quote grid (XLK, XLC, XLF, XLY, XLV, XLE), market session status badge (Open / Closed / Pre-market), strict 5-second timeout via `AbortSignal.timeout(5000)`, and graceful offline degradation with verified fallbacks
-- 8.2 Market dynamics educational explainers: 4 educational cards explaining public comparable multiples and 409A appraisals, interest rate discount rates on venture valuations, secondary market discounts vs preferred stock, and IPO listing readiness
-- 8.3 Verified companies dataset (`/research/companies`): Ledger-style table featuring private venture valuations, latest 409A appraisal marks, common vs preferred discounts, sector filters, public/private toggles, search filtering, and active user grant indicators
-- 8.4 Company detail (`/research/companies/[slug]` & `/api/market/companies/[slug]`): Comprehensive profile with capital structure metrics, chronological funding rounds timeline (Seed through Series D / Tender), 409A price progression table, watchlist toggle with diligence notes, and personalized user equity overlay for active option holders
-- 8.5 Company comparison tool (`/research/compare`): Multi-company side-by-side comparison matrix (up to 3 companies) evaluating valuation, 409A per share, standard option pool sizing (12-15%), post-termination exercise windows (90-day vs 10-year), and user holdings
-- 8.6 Financial news (`/research/news`): Category-filtered market wire with source transparency callout, sample vs live wire verification badges, relative publication timestamps, and external link compliance
-- 8.7 Watchlist management (`/research/watchlist`): Followed companies list with inline editable diligence notes backed by `PATCH /api/watchlist`, current 409A valuation, direct links to company profiles, remove actions, and EmptyState
-- 8.8 Option pool modeler (`/pool` & `src/lib/calculations/pool.ts`): Pure calculation engine `projectPoolRunway()` with typed company presets (Stripe, Databricks, Figma, Anthropic) and custom parameter support; hero figure strip (pool %, overhang %, unallocated reserve, runway quarters), department distribution table, and 8-quarter depletion trajectory table with low-reserve warnings
-- 8.9 Logged-out access and responsive verification: Full public unauthenticated access across all `/research/*` routes in `middleware.ts`, with graceful elevation for user equity overlays and watchlist tracking
+- 9.1 Learn index (`/learn`): Ledger-style layout with PageHeader, search across all 24 guides and 80+ glossary terms with live term preview, starter guide recommendation banner (`/learn/esop-basics`), quick jump strip to Glossary, Offer checklist, and Quiz, and 5 structured learning path sections
+- 9.2 Article reader (`/learn/[slug]`): Full markdown article reader with category eyebrow, read time, key takeaways callout box, formatted body text with inline `<Term>` definition tooltips, worked financial calculation blocks with formula breakdown, interactive tool recommendation banners, legal/tax educational disclaimer footnote, and previous/next guide navigation
+- 9.3 24 equity educational articles (`src/lib/learn/articles.ts`): 24 factual financial guides organized into 5 learning paths (Foundations of startup equity, Tax planning and AMT, Liquidity, secondaries, and exits, Legal rights and departure planning, and Offer evaluation and cap table dilution)
+- 9.4 Verified calculations in examples (`tests/learn.test.ts`): Vitest tests mathematically verifying that pre-tax spread equals units times FMV minus strike price, and estimated tax calculations remain bounded
+- 9.5 Glossary with 80+ terms and A-Z index (`/learn/glossary` & `src/lib/learn/glossary.ts`): Complete alphabetical catalog of 84 equity terms across 6 categories (Basics, Taxes, Legal, Market, Valuation, Exit), interactive search, category filter pills, 26-letter quick jump bar with availability states, and permalink anchors (`#<slug>`)
+- 9.6 Inline `<Term>` component (`src/components/learn/Term.tsx`): Subtle dotted-underline definition trigger with hover popover card showing category, short definition, and direct link to the full glossary entry
+- 9.7 Offer evaluation checklist tool (`/learn/checklist`): 10-point diligence framework for startup job offers with category breakdown, critical/high/standard priority badges, specific questions to ask hiring managers, red flag warning signs, dynamic readiness score assessment, and printable summary
+- 9.8 10-question equity knowledge quiz (`/learn/quiz` & `src/lib/learn/quiz.ts`): Interactive 10-question equity assessment with stepper progress, immediate explanation feedback on option selection, related guide links, accuracy percentage calculation, and comprehensive review breakdown
 
 **NOT DONE:**
-- None for Phase 8
+- None for Phase 9
 
 **CHANGED:**
-- 11 files changed (+2,100 / -850 lines)
-- `src/lib/calculations/pool.ts` (new)
-- `src/lib/finnhub.ts` (modified: 5-second timeout, sector ETFs, session status)
-- `src/app/api/watchlist/route.ts` (modified: PATCH for notes)
-- `src/app/api/market/companies/[slug]/route.ts` (new)
-- `src/app/(content)/research/market/page.tsx` (rewritten)
-- `src/app/(content)/research/companies/page.tsx` (rewritten)
-- `src/app/(content)/research/companies/[slug]/page.tsx` (new)
-- `src/app/(content)/research/compare/page.tsx` (new)
-- `src/app/(content)/research/news/page.tsx` (rewritten)
-- `src/app/(content)/research/watchlist/page.tsx` (rewritten)
-- `src/app/(app)/pool/page.tsx` (rewritten)
-- `tests/research.test.ts` (new: 7 unit tests)
+- 10 files changed (+2,600 / -380 lines)
+- `src/lib/learn/articles.ts` (new)
+- `src/lib/learn/glossary.ts` (new)
+- `src/lib/learn/quiz.ts` (new)
+- `src/components/learn/Term.tsx` (new)
+- `src/lib/mockData.ts` (modified: re-exports 24 articles and 84 terms)
+- `src/app/(content)/learn/page.tsx` (rewritten)
+- `src/app/(content)/learn/[slug]/page.tsx` (new)
+- `src/app/(content)/learn/glossary/page.tsx` (new)
+- `src/app/(content)/learn/checklist/page.tsx` (new)
+- `src/app/(content)/learn/quiz/page.tsx` (new)
+- `tests/learn.test.ts` (new: 9 unit tests)
 - `docs/REDESIGN_PROGRESS.md`
 - 0 new runtime dependencies added
 
 **VERIFIED:**
-- tests: 60 passed, 0 failed across 9 test suites
+- tests: 69 passed, 0 failed across 10 test suites
 - tsc: clean, 0 errors
-- build: clean, all 44 static pages + dynamic routes compiled
-- style gate: Sparkles 2 | bg-gradient 0 | rounded-2xl/3xl 13 | slate- 191 | emerald- 51 | emoji 1 (slate reduced by 149, emerald by 51, rounded-2xl by 15; zero violations in new Phase 8 code)
-- copy gate: banned words found 1 (0 in Phase 8 code; 1 remaining in unmigrated `learn/page.tsx`)
+- build: clean, all 71 static and SSG pages compiled
+- style gate: Sparkles 0 | bg-gradient 0 | rounded-2xl/3xl 10 | slate- 135 | emerald- 35 | emoji 1 (slate reduced by 56, emerald by 16, rounded-2xl reduced by 3; zero violations in new Phase 9 code)
+- copy gate: banned words found 0 (100% clean across the entire repository!)
 
 **HOW TO SEE IT:**
-- Run `npm run dev` and navigate to `http://localhost:3000/research/market`
-- View market session status, benchmark quotes table, sector ETF performance grid, and the 4 market dynamics explainers
-- Visit `http://localhost:3000/research/companies` to browse verified companies with sector and status filters
-- Click any company (e.g. `/research/companies/stripe`) to inspect funding timeline, 409A history, user holdings overlay, and add a watchlist note
-- Visit `http://localhost:3000/research/compare` to compare Stripe, Databricks, and Figma side-by-side
-- Visit `http://localhost:3000/research/news` to review curated articles with verification status tags
-- Visit `http://localhost:3000/research/watchlist` to view followed companies and edit diligence notes
-- Visit `http://localhost:3000/pool` to model option pool runway, test company presets, and inspect the 8-quarter depletion table
+- Run `npm run dev` and navigate to `http://localhost:3000/learn`
+- Search for "AMT" or "vesting" to see instant matching guides and glossary term previews
+- Click on any guide (e.g. `/learn/esop-basics` or `/learn/amt-deep-dive-for-iso`) to read the article, inspect key takeaways, view inline `<Term>` definition tooltips, and review the worked calculation breakdown
+- Visit `http://localhost:3000/learn/glossary` to browse all 84 defined terms, filter by category (Taxes, Legal, Valuation, Exit, Basics), and use the A-Z quick jump bar
+- Visit `http://localhost:3000/learn/checklist` to run the 10-point startup offer diligence framework, expand red flag warnings, and calculate your readiness score
+- Visit `http://localhost:3000/learn/quiz` to take the 10-question equity quiz, review immediate feedback explanations, and get personalized reading recommendations
 
 **NEXT:**
-- Phase 9: Learn Hub (Weight 8%, cumulative 95%)
-- Learn index with search (`/learn`), Article reader (`/learn/[slug]`), 24 comprehensive markdown equity articles, calculation verification via Vitest, Glossary with 80+ terms and A-Z index (`/learn/glossary`), Inline `<Term>` component, Offer checklist tool (`/learn/checklist`), and 10-question equity quiz (`/learn/quiz`).
+- Phase 10: Polish, Accessibility, Final Checks (Weight 5%, cumulative 100%)
+- Full WCAG AA audit with `@axe-core/playwright`, responsive verification (360px to 1920px), `.redesign/after/` screenshots, performance optimization, style and copy gate final runs, and complete documentation handoff.
 
