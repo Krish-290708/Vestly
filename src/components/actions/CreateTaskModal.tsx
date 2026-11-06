@@ -1,16 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, PlusCircle } from 'lucide-react';
+import { Dialog, Field, Button } from '@/components/ui';
 
 interface CreateTaskModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 export default function CreateTaskModal({
-  isOpen,
+  open,
   onClose,
   onSuccess,
 }: CreateTaskModalProps) {
@@ -22,8 +22,6 @@ export default function CreateTaskModal({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  if (!isOpen) return null;
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,95 +56,66 @@ export default function CreateTaskModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 rounded-2xl max-w-md w-full border border-slate-800 shadow-2xl p-6 space-y-4 text-white">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <PlusCircle className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-base font-bold text-white">Create Action Item</h3>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <Dialog open={open} onClose={onClose} title="Create action item">
+      {error && (
+        <div className="p-2.5 bg-loss/10 border border-loss/30 text-loss text-xs rounded-sm">
+          {error}
         </div>
+      )}
 
-        {error && (
-          <div className="p-2.5 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg">
-            {error}
-          </div>
-        )}
+      <form onSubmit={handleCreateTask} className="space-y-4 text-xs">
+        <Field label="Title">
+          <input
+            type="text"
+            required
+            placeholder="e.g. Discuss 83(b) with tax advisor"
+            value={taskForm.title}
+            onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+            className="w-full px-3 py-2 bg-surface text-ink border border-rule rounded-sm text-xs focus:ring-1 focus:ring-accent focus:outline-none"
+          />
+        </Field>
 
-        <form onSubmit={handleCreateTask} className="space-y-3 text-xs">
-          <div>
-            <label className="block font-semibold text-slate-300 mb-1">Title *</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Discuss 83(b) with tax advisor"
-              value={taskForm.title}
-              onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-950 text-white border border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            />
-          </div>
+        <Field label="Due date">
+          <input
+            type="date"
+            required
+            value={taskForm.dueDate}
+            onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
+            className="w-full px-3 py-2 bg-surface text-ink border border-rule rounded-sm text-xs focus:ring-1 focus:ring-accent focus:outline-none"
+          />
+        </Field>
 
-          <div>
-            <label className="block font-semibold text-slate-300 mb-1">Due Date *</label>
-            <input
-              type="date"
-              required
-              value={taskForm.dueDate}
-              onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-950 text-white border border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            />
-          </div>
+        <Field label="Urgency">
+          <select
+            value={taskForm.urgency}
+            onChange={(e) => setTaskForm({ ...taskForm, urgency: e.target.value })}
+            className="w-full px-3 py-2 border border-rule rounded-sm text-xs bg-surface text-ink focus:ring-1 focus:ring-accent focus:outline-none"
+          >
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+            <option value="CRITICAL">Critical</option>
+          </select>
+        </Field>
 
-          <div>
-            <label className="block font-semibold text-slate-300 mb-1">Urgency</label>
-            <select
-              value={taskForm.urgency}
-              onChange={(e) => setTaskForm({ ...taskForm, urgency: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-700 rounded-lg text-xs bg-slate-950 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            >
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-              <option value="CRITICAL">Critical (Immediate action)</option>
-            </select>
-          </div>
+        <Field label="Notes">
+          <textarea
+            rows={2}
+            value={taskForm.description}
+            onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+            className="w-full px-3 py-2 bg-surface text-ink border border-rule rounded-sm text-xs focus:ring-1 focus:ring-accent focus:outline-none"
+          />
+        </Field>
 
-          <div>
-            <label className="block font-semibold text-slate-300 mb-1">Description / Notes</label>
-            <textarea
-              rows={2}
-              value={taskForm.description}
-              onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-950 text-white border border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 rounded-lg text-slate-400 hover:bg-slate-800 font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold hover:bg-emerald-400 disabled:opacity-50 transition-colors"
-            >
-              {loading ? 'Saving...' : 'Save Task'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex justify-end gap-2 pt-3 border-t border-rule">
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" size="sm" disabled={loading}>
+            {loading ? 'Saving...' : 'Save action'}
+          </Button>
+        </div>
+      </form>
+    </Dialog>
   );
 }
-

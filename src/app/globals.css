@@ -69,12 +69,63 @@ body {
 
 /* Print optimizations forced to light paper theme */
 @media print {
-  body {
-    background-color: #F7F4EE !important;
-    color: #1A1814 !important;
-    padding: 0 !important;
+  *,
+  *::before,
+  *::after {
+    color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  .no-print {
+
+  html {
+    font-size: 11pt !important;
+  }
+
+  body {
+    background-color: #ffffff !important;
+    color: #1a1a1a !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .no-print,
+  nav,
+  aside,
+  [role="navigation"],
+  [role="banner"],
+  footer,
+  [aria-label="Notifications"] {
     display: none !important;
+  }
+
+  .print-page {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    page-break-inside: avoid;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+
+  @page {
+    margin: 1.5cm 1.2cm;
+    size: A4;
   }
 }

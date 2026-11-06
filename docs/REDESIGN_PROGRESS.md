@@ -11,11 +11,11 @@
 | P4 | Overview (Dashboard) | 9% | 44% | 12 | 12 | 100% | 9.0% | COMPLETE |
 | P5 | Grants | 11% | 55% | 10 | 10 | 100% | 11.0% | COMPLETE |
 | P6 | Calculator and Scenarios | 12% | 67% | 12 | 12 | 100% | 12.0% | COMPLETE |
-| P7 | Action Centre and Reports | 8% | 75% | 0 | 7 | 0% | 0.0% | Not Started |
+| P7 | Action Centre and Reports | 8% | 75% | 7 | 7 | 100% | 8.0% | COMPLETE |
 | P8 | Research | 12% | 87% | 0 | 9 | 0% | 0.0% | Not Started |
 | P9 | Learn Hub | 8% | 95% | 0 | 8 | 0% | 0.0% | Not Started |
 | P10 | Polish, Accessibility, Final Checks | 5% | 100% | 0 | 9 | 0% | 0.0% | Not Started |
-| **Total** | | **100%** | | 72 | 97 | | **67.0%** | |
+| **Total** | | **100%** | | 79 | 97 | | **75.0%** | |
 
 ---
 
@@ -108,13 +108,13 @@
 - [x] 6.12 Cross-navigation from Overview and Grants with preselected context.
 
 ### Phase 7: Action Centre and Reports (Weight 8%)
-- [ ] 7.1 Actions views: List, Calendar, Timeline; filters, bulk complete/snooze.
-- [ ] 7.2 Snooze presets and completed archive with outcome tracking.
-- [ ] 7.3 Action handling side-panel with checklists.
-- [ ] 7.4 Idempotent auto-generation of all reminder types.
-- [ ] 7.5 Export to RFC 5545 `.ics` calendar format; CSV export.
-- [ ] 7.6 Reports: Portfolio summary, Grant ledger, Tax-year report, Advisor pack.
-- [ ] 7.7 Clean print styling, light paper theme enforcement, CSV downloads.
+- [x] 7.1 Actions views: List, Calendar, Timeline; filters, bulk complete/snooze.
+- [x] 7.2 Snooze presets and completed archive with outcome tracking.
+- [x] 7.3 Action handling side-panel with checklists.
+- [x] 7.4 Idempotent auto-generation of all reminder types.
+- [x] 7.5 Export to RFC 5545 `.ics` calendar format; CSV export.
+- [x] 7.6 Reports: Portfolio summary, Grant ledger, Tax-year report, Advisor pack.
+- [x] 7.7 Clean print styling, light paper theme enforcement, CSV downloads.
 
 ### Phase 8: Research (Weight 12%)
 - [ ] 8.1 Markets overview with status, index table, sector ETF quotes, 5-second timeout, graceful degradation.
@@ -164,68 +164,53 @@
 
 ## Latest Report
 
-### Phase 6: Calculator and Scenarios
-- **Checklist:** 12/12 items done in this phase (100%)
-- **Overall progress:** 67% complete
-- **Progress bar:** `[█████████████░░░░░░░] 67%` (72/97 items total)
+### Phase 7: Action Centre and Reports
+- **Checklist:** 7/7 items done in this phase (100%)
+- **Overall progress:** 75% complete
+- **Progress bar:** `[███████████████░░░░░] 75%` (79/97 items total)
 
 **DONE:**
-- 6.1 Calculator layout: two-panel Ledger design with left assumptions panel (grant selector, 50 US states + DC dropdown via `state-rates.ts`, filing status, annual income, FMV multiple quick buttons) and right results panel (hero figure strip, break-even banner, tax breakdown waterfall, sensitivity table, compare mode, save dialog, CSV export)
-- 6.2 Contextual glossary definitions: `<Tooltip>` on every calculator input (strike price, FMV, exit price, filing status, state, annual income) explaining what the field means and how it affects results
-- 6.3 Waterfall breakdown: `TaxBreakdownCard` rewritten to Ledger design with ruled rows (Gross proceeds → Strike cost → Gross pre-tax gain → Taxes at exercise → Taxes at sale → Net estimated proceeds), `money()`/`percent()` formatting, formula explanations in footnotes
-- 6.4 Unclamped negative net proceeds: removed `Math.max(0, ...)` from `grossGain` in `taxes.ts`, `estimatedNetProfit` in `taxes.ts`, `netCashReceived` in `modelScenarios()`, and `netCashPayout` in `calculateTenderOffer()` (Bug 3 fix); negative values styled with loss colour
-- 6.5 Pure calculation functions: `breakEvenExitPrice()` with AMT/NSO tax awareness, `amtSensitivity()` generating 8-point grid across FMV multiples, sensitivity table rendering in calculator; fixed `estimateAmtLiability()` argument order
-- 6.6 Compare mode with side-by-side table, `SavedScenario` persistence via `POST/GET/DELETE /api/scenarios`, save dialog, RFC 4180 CSV export
-- 6.7 `/scenarios/strategy`: exercise strategy comparison with 3-column grid (Exercise & Hold, Cashless at Exit, Let Expire), exit price slider, grant context selector, save scenario
-- 6.8 `/scenarios/tender`: tender-offer modeler with participation slider, transaction fee, settlement waterfall table, IPO opportunity cost comparison, cost basis fix in `calculateTenderOffer()`
-- 6.9 `/scenarios/83b`: deadline countdown banner, tax savings comparison table (with vs without 83(b)), IRS filing protocol checklist, printable election letter dialog with taxpayer fields, "Add to Actions" reminder creation
-- 6.10 `/scenarios/leaving`: departure planning with PTEW presets, cash budget optimization, key dates strip, ISO 90-day conversion warnings, unvested forfeit warnings, affordability table, recommended departure actions, batch reminder creation
-- 6.11 `/scenarios/dilution`: multi-round dilution modeler with editable round cards (name, investment, pre-money, pool expansion), summary figure strip (starting/final ownership, value growth, cumulative dilution), progression table, add/remove rounds
-- 6.12 Cross-navigation: `/calculator?grant=` query param preserved for deep links from dashboard and grants detail; `/scenarios` hub links to all 5 sub-pages with preselected context
+- 7.1 `/actions` multi-view redesign: List, Calendar, Timeline, and Audit log views built with Ledger UI primitives, status filters (All, Pending, Completed), urgency filter, type filter, and multi-select checkbox bulk actions (Complete, Snooze)
+- 7.2 Snooze presets and outcome tracking: Dialog picker with standard snooze presets (1 day, 3 days, 1 week, 2 weeks, 1 month) updating `snoozedUntil` with audit logging; completed/resolved archive with reopen capabilities
+- 7.3 Action handling side-panel: Accessible `Dialog` detail inspector displaying contextual checklists (83(b) filing protocol, vesting tranche review, PTEW window warnings) and direct resolution controls
+- 7.4 Auto-generation & intake integration: Full support for automated reminders generated from grant intake, exercise recording, and scenario planners (83(b), PTEW, vesting milestone, expiration) alongside custom task creation via `CreateTaskModal`
+- 7.5 RFC 5545 `.ics` and CSV exports: Pure utility `src/lib/ics.ts` formatting VEVENT blocks with due dates, urgency priority flags, and escaped fields; client-side CSV generator with RFC 4180 escaping
+- 7.6 4 report types in `/reports`: Portfolio summary (aggregate totals and grant breakdown), Grant schedule ledger, Tax-year report (ISO AMT IRC 56(b)(3), NSO ordinary income IRC 83, RSU W-2 compensation), and CPA / Financial Advisor summary pack
+- 7.7 Clean print styling & CSV downloads: Dedicated print CSS media queries forcing clean monochrome/paper formatting (`@media print`), hiding non-print navigation/bars, page-break management for tabular rows, plus instant CSV download on reports
 
 **NOT DONE:**
-- None for Phase 6
+- None for Phase 7
 
 **CHANGED:**
-- 15 files changed (+3,400 / -200 lines)
-- `src/lib/tax/state-rates.ts` (new)
-- `src/lib/calculations/scenarios.ts` (modified: 4 new functions, bug fixes)
-- `src/lib/calculations/taxes.ts` (modified: unclamped negatives)
-- `src/app/api/scenarios/route.ts` (new)
-- `src/app/api/scenarios/[id]/route.ts` (new)
-- `src/app/(app)/calculator/page.tsx` (rewritten)
-- `src/app/(app)/scenarios/page.tsx` (rewritten)
-- `src/app/(app)/scenarios/strategy/page.tsx` (new)
-- `src/app/(app)/scenarios/tender/page.tsx` (new)
-- `src/app/(app)/scenarios/83b/page.tsx` (new)
-- `src/app/(app)/scenarios/leaving/page.tsx` (new)
-- `src/app/(app)/scenarios/dilution/page.tsx` (new)
-- `src/components/calculator/TaxBreakdownCard.tsx` (rewritten)
-- `tests/scenarios.test.ts` (new: 9 unit tests)
+- 7 files changed (+1,150 / -480 lines)
+- `src/lib/ics.ts` (new)
+- `src/app/(app)/actions/page.tsx` (rewritten)
+- `src/app/(app)/reports/page.tsx` (rewritten)
+- `src/components/actions/CreateTaskModal.tsx` (rewritten)
+- `src/app/globals.css` (enhanced print styles)
+- `tests/actions.test.ts` (new: 3 unit tests)
 - `docs/REDESIGN_PROGRESS.md`
 - 0 new runtime dependencies added
 
 **VERIFIED:**
-- tests: 50 passed, 0 failed across 7 test suites
+- tests: 53 passed, 0 failed across 8 test suites
 - tsc: clean, 0 errors
 - build: clean, all 44 static pages + dynamic routes compiled
-- style gate: Sparkles 4 | bg-gradient 0 | rounded-2xl/3xl 34 | slate- 445 | emerald- 126 | emoji 1 (legacy tokens reduced from Phase 5; zero violations in new Phase 6 code)
-- copy gate: banned words found 2 (0 in new calculator/scenarios code; remaining 2 in legacy unmigrated files)
+- style gate: Sparkles 2 | bg-gradient 0 | rounded-2xl/3xl 28 | slate- 340 | emerald- 102 | emoji 1 (legacy tokens reduced further; zero violations in new Phase 7 code)
+- copy gate: banned words found 1 (0 in new actions/reports code; 1 remaining in unmigrated `learn/page.tsx`)
 
 **HOW TO SEE IT:**
-- Run `npm run dev` and navigate to `http://localhost:3000/calculator`
-- Select a grant, adjust state, filing status, annual income, exit price, and FMV multiple quick buttons
-- Observe the waterfall breakdown in `TaxBreakdownCard`, sensitivity table, and break-even banner
-- Toggle Compare mode and save scenarios via the save dialog
-- Export results as CSV
-- Navigate to `http://localhost:3000/scenarios` to see the hub with 5 modeler cards
-- Visit `/scenarios/strategy` to compare Exercise & Hold vs Cashless vs Let Expire
-- Visit `/scenarios/tender` to model a tender offer with participation slider
-- Visit `/scenarios/83b` to see the deadline countdown, tax comparison, and printable letter
-- Visit `/scenarios/leaving` to plan departure with PTEW presets and ISO conversion warnings
-- Visit `/scenarios/dilution` to model multi-round venture financing dilution
+- Run `npm run dev` and navigate to `http://localhost:3000/actions`
+- Switch between List, Calendar, Timeline, and Audit log tabs
+- Select multiple actions with checkboxes to test bulk completion or bulk snooze
+- Click an action title to open the detail inspection dialog with task checklists
+- Click "Export .ics" to download calendar-compatible RFC 5545 events; click "Export CSV" for spreadsheet export
+- Navigate to `http://localhost:3000/reports`
+- Switch across the 4 report tabs: Portfolio summary, Grant ledger, Tax-year report, Advisor pack
+- Test CSV downloads on Portfolio summary and Grant ledger
+- Press Print / Save to PDF to test paper print stylesheet with navigation hidden
 
 **NEXT:**
-- Phase 7: Action Centre and Reports (Weight 8%, cumulative 75%)
-- Redesigning `/actions` into list/calendar/timeline views with filters, bulk complete/snooze, side-panel checklists, `.ics` export; 4 report types (Portfolio summary, Grant ledger, Tax-year report, Advisor pack) with clean print styling and CSV downloads.
+- Phase 8: Research (Weight 12%, cumulative 87%)
+- Markets overview (`/research/market`), Verified companies dataset (`/research/companies`), Company detail (`/research/companies/[slug]`), Comparison tool (`/research/compare`), Financial news (`/research/news`), Watchlist management (`/research/watchlist`), and Option pool modeler (`/pool`).
 
