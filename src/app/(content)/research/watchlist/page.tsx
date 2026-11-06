@@ -2,15 +2,39 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  Bookmark, 
-  Trash2, 
-  ArrowRight 
-} from 'lucide-react';
+import { PageHeader, Badge, Button, EmptyState, Dialog, Field } from '@/components/ui';
+import { useToast } from '@/components/ui/Toast';
+import { money, compactMoney, date } from '@/lib/format';
+
+interface WatchlistItem {
+  id: string;
+  note?: string | null;
+  createdAt: string;
+  company: {
+    id: string;
+    name: string;
+    ticker?: string;
+    sector: string;
+    isPublic: boolean;
+    description?: string;
+    latestValuation?: number;
+    latestFmvPerShare: number;
+  };
+}
+
+function slugify(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
 
 export default function WatchlistPage() {
-  const [watchlist, setWatchlist] = useState<any[]>([]);
+  const { showToast } = useToast();
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Note editing state
+  const [editingItem, setEditingItem] = useState<WatchlistItem | null>(null);
+  const [noteDraft, setNoteDraft] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
 
   const fetchWatchlist = async () => {
     setLoading(true);
@@ -31,107 +55,221 @@ export default function WatchlistPage() {
     fetchWatchlist();
   }, []);
 
-  const handleRemove = async (companyId: string) => {
+  const handleRemove = async (companyId: string, companyName: string) => {
     try {
       const res = await fetch('/api/watchlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ companyId }),
       });
-      if (res.ok) fetchWatchlist();
-    } catch (err) {
-      console.error(err);
+      if (res.ok) {
+        setWatchlist((prev) => prev.filter((item) => item.company.id !== companyId));
+        showToast({
+          title: 'Removed',
+          message: `Removed ${companyName} from your watchlist.`,
+          type: 'info',
+        });
+      }
+    } catch {
+      showToast({ title: 'Error', message: 'Could not remove company.', type: 'error' });
     }
   };
 
+  const handleSaveNote = async () => {
+    if (!editingItem) return;
+    setSavingNote(true);
+    try {
+      const res = await fetch('/api/watchlist', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId: editingItem.company.id,
+          note: noteDraft,
+        }),
+      });
+      if (res.ok) {
+        setWatchlist((prev) =>
+          prev.map((item) =>
+            item.id === editingItem.id ? { ...item, note: noteDraft } : item
+          )
+        );
+        setEditingItem(null);
+        showToast({ title: 'Saved', message: 'Note updated.', type: 'success' });
+      } else {
+        showToast({ title: 'Error', message: 'Could not save note.', type: 'error' });
+      }
+    } catch {
+      showToast({ title: 'Error', message: 'Network error saving note.', type: 'error' });
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const contextSentence =
+    watchlist.length === 0
+      ? 'No companies followed yet. Follow target employers to track valuation updates.'
+      : `Monitoring ${watchlist.length} followed ${watchlist.length !== 1 ? 'companies' : 'company'} for 409A and secondary pricing shifts.`;
+
   return (
-    <div className="space-y-8 pb-12">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-          <Bookmark className="w-7 h-7 text-emerald-400" />
-          Tracked Companies Watchlist
-        </h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Monitor valuation changes and secondary market pricing across your employers and target companies
-        </p>
-      </div>
-
-      {/* Watchlist Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {watchlist.map((item) => {
-          const company = item.company;
-          if (!company) return null;
-
-          return (
-            <div 
-              key={item.id}
-              className="bg-slate-900/90 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-sm p-6 space-y-4 hover:border-slate-700 transition-colors flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-bold text-white">{company.name}</h3>
-                    <span className="text-xs text-slate-400">{company.sector}</span>
-                  </div>
-                  <button
-                    onClick={() => handleRemove(company.id)}
-                    title="Remove from watchlist"
-                    className="p-1.5 text-slate-500 hover:text-rose-400 rounded-md transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-between text-xs">
-                  <span className="text-slate-400">409A / Share:</span>
-                  <span className="font-extrabold text-emerald-400 font-mono text-sm">
-                    ${company.latestFmvPerShare?.toFixed(2)}
-                  </span>
-                </div>
-
-                <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                  {company.description || 'Venture-backed private technology enterprise.'}
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-                <Link
-                  href={`/research/companies?q=${encodeURIComponent(company.name)}`}
-                  className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
-                >
-                  <span>View Valuation History</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-
-                {company.ticker && (
-                  <span className="font-mono text-[11px] font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                    {company.ticker}
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {watchlist.length === 0 && !loading && (
-        <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-12 text-center space-y-4 shadow-xl max-w-md mx-auto">
-          <Bookmark className="w-10 h-10 text-emerald-400 mx-auto" />
-          <div className="space-y-1">
-            <h3 className="text-base font-bold text-white">Your watchlist is currently empty</h3>
-            <p className="text-xs text-slate-400">
-              Browse the Company Explorer to follow companies and track valuation trends in one place.
-            </p>
-          </div>
-          <Link
-            href="/research/companies"
-            className="inline-block px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-colors"
-          >
-            Explore Companies
+    <div className="space-y-6 pb-12">
+      <PageHeader
+        eyebrow="Research"
+        title="Watchlist"
+        contextSentence={contextSentence}
+        actions={
+          <Link href="/research/companies">
+            <Button variant="primary" size="sm">
+              + Find companies
+            </Button>
           </Link>
+        }
+      />
+
+      {watchlist.length === 0 && !loading ? (
+        <EmptyState
+          title="Your watchlist is empty"
+          description="Follow target employers, competitors, or secondary market candidates to track valuation changes and maintain personal diligence notes."
+          action={
+            <Link href="/research/companies">
+              <Button variant="primary" size="sm">
+                Explore companies
+              </Button>
+            </Link>
+          }
+        />
+      ) : (
+        <div className="border border-rule rounded-sm overflow-hidden bg-surface">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-sunk border-b border-rule">
+              <tr>
+                <th className="p-3 font-semibold text-muted">Company</th>
+                <th className="p-3 font-semibold text-muted">Status</th>
+                <th className="p-3 font-semibold text-muted">Sector</th>
+                <th className="p-3 font-semibold text-muted text-right">409A / Share</th>
+                <th className="p-3 font-semibold text-muted text-right">Valuation / Cap</th>
+                <th className="p-3 font-semibold text-muted">Personal note</th>
+                <th className="p-3 font-semibold text-muted text-right w-44"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-rule">
+              {watchlist.map((item) => {
+                const { company } = item;
+                const slug = slugify(company.name);
+
+                return (
+                  <tr key={item.id} className="hover:bg-sunk/30 transition-colors">
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/research/companies/${slug}`}
+                          className="font-medium text-ink hover:text-accent font-serif"
+                        >
+                          {company.name}
+                        </Link>
+                        {company.ticker && (
+                          <span className="font-mono text-[10px] text-muted bg-sunk px-1 py-0.2 border border-rule rounded-sm">
+                            {company.ticker}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    <td className="p-3">
+                      <Badge tone={company.isPublic ? 'info' : 'neutral'}>
+                        {company.isPublic ? 'Public' : 'Private'}
+                      </Badge>
+                    </td>
+
+                    <td className="p-3 text-muted">{company.sector}</td>
+
+                    <td className="p-3 font-mono text-right tabular-nums text-ink font-semibold">
+                      {money(company.latestFmvPerShare, { showCents: true })}
+                    </td>
+
+                    <td className="p-3 font-mono text-right tabular-nums text-ink font-semibold">
+                      {company.latestValuation ? compactMoney(company.latestValuation) : 'Private'}
+                    </td>
+
+                    <td className="p-3 text-muted max-w-xs">
+                      {item.note ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate">{item.note}</span>
+                          <button
+                            onClick={() => {
+                              setEditingItem(item);
+                              setNoteDraft(item.note || '');
+                            }}
+                            className="text-[11px] text-accent hover:underline shrink-0"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditingItem(item);
+                            setNoteDraft('');
+                          }}
+                          className="text-[11px] text-muted hover:text-ink underline underline-offset-2"
+                        >
+                          + Add note
+                        </button>
+                      )}
+                    </td>
+
+                    <td className="p-3 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link href={`/research/companies/${slug}`}>
+                          <Button variant="ghost" size="sm">
+                            Profile
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemove(company.id, company.name)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
+
+      {/* Edit Note Modal */}
+      <Dialog
+        open={Boolean(editingItem)}
+        onClose={() => setEditingItem(null)}
+        title={editingItem ? `Diligence note: ${editingItem.company.name}` : ''}
+      >
+        {editingItem && (
+          <div className="space-y-4 text-xs">
+            <Field label="Note content (saved with your account)">
+              <textarea
+                rows={3}
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                placeholder="e.g. Received offer for Senior Staff role; 4-year vesting; tracking Series E valuation mark."
+                className="w-full px-3 py-2 bg-surface text-ink border border-rule rounded-sm text-xs focus:ring-1 focus:ring-accent focus:outline-none"
+              />
+            </Field>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-rule">
+              <Button variant="ghost" size="sm" onClick={() => setEditingItem(null)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleSaveNote} disabled={savingNote}>
+                {savingNote ? 'Saving...' : 'Save note'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Dialog>
     </div>
   );
 }

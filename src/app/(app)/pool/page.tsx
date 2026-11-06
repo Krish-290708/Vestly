@@ -1,213 +1,317 @@
 'use client';
 
-import React, { useState } from 'react';
-import { 
-  PieChart as PieIcon, 
-  Users, 
-  BarChart3
-} from 'lucide-react';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  Tooltip, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid 
-} from 'recharts';
+import React, { useState, useMemo } from 'react';
+import { PageHeader, Badge, Button, Callout, Field } from '@/components/ui';
+import { units, percent } from '@/lib/format';
+import {
+  projectPoolRunway,
+  COMPANY_POOL_PRESETS,
+  CompanyPoolPreset,
+} from '@/lib/calculations/pool';
 
 export default function PoolPage() {
-  const [selectedCompany, setSelectedCompany] = useState('Stripe');
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('stripe');
 
-  // Realistic corporate ESOP pool aggregate data
-  const poolData = {
-    companyName: 'Stripe, Inc.',
-    valuation: '$65 Billion',
-    totalAuthorizedShares: 100000000,
-    totalPoolShares: 15000000, // 15% ESOP pool
-    grantedShares: 11200000,
-    unallocatedReserve: 3800000,
-    overhangPercent: 11.2,
-    burnRatePerQuarter: 450000,
-    runwayQuarters: 8.4,
+  // Input states initialized from Stripe preset
+  const defaultPreset = COMPANY_POOL_PRESETS[0];
+  const [authorizedShares, setAuthorizedShares] = useState<number>(defaultPreset.totalAuthorizedShares);
+  const [poolShares, setPoolShares] = useState<number>(defaultPreset.totalPoolShares);
+  const [grantedShares, setGrantedShares] = useState<number>(defaultPreset.grantedShares);
+  const [burnRate, setBurnRate] = useState<number>(defaultPreset.burnRatePerQuarter);
+
+  const handleSelectPreset = (presetId: string) => {
+    setSelectedPresetId(presetId);
+    if (presetId === 'custom') return;
+    const found = COMPANY_POOL_PRESETS.find((p) => p.id === presetId);
+    if (found) {
+      setAuthorizedShares(found.totalAuthorizedShares);
+      setPoolShares(found.totalPoolShares);
+      setGrantedShares(found.grantedShares);
+      setBurnRate(found.burnRatePerQuarter);
+    }
   };
 
-  const poolDistribution = [
-    { name: 'Active Granted Options', value: 8500000, color: '#10b981' },
-    { name: 'Active Vested RSUs', value: 2700000, color: '#6366f1' },
-    { name: 'Unallocated Pool Reserve', value: 3800000, color: '#334155' },
-  ];
+  const activePreset = useMemo(() => {
+    return COMPANY_POOL_PRESETS.find((p) => p.id === selectedPresetId);
+  }, [selectedPresetId]);
 
-  const departmentBreakdown = [
-    { dept: 'Engineering & Infrastructure', units: 6200000, percent: '55%' },
-    { dept: 'Product & UX Design', units: 2240000, percent: '20%' },
-    { dept: 'Sales & Enterprise GTM', units: 1680000, percent: '15%' },
-    { dept: 'Operations & General Admin', units: 1080000, percent: '10%' },
+  const runwayResult = useMemo(() => {
+    return projectPoolRunway({
+      totalAuthorizedShares: authorizedShares,
+      totalPoolShares: poolShares,
+      grantedShares,
+      burnRatePerQuarter: burnRate,
+    });
+  }, [authorizedShares, poolShares, grantedShares, burnRate]);
+
+  const departments = activePreset?.departments || [
+    { dept: 'Engineering and research', units: Math.round(grantedShares * 0.55), percent: 55 },
+    { dept: 'Product and design', units: Math.round(grantedShares * 0.20), percent: 20 },
+    { dept: 'Sales and marketing', units: Math.round(grantedShares * 0.15), percent: 15 },
+    { dept: 'Operations and administrative', units: Math.round(grantedShares * 0.10), percent: 10 },
   ];
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <PageHeader
+        eyebrow="Model"
+        title="Option pool"
+        contextSentence="Option pool sizing, equity overhang, department allocation, and burn runway modeling."
+        actions={
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted">Preset:</span>
+            <select
+              value={selectedPresetId}
+              onChange={(e) => handleSelectPreset(e.target.value)}
+              className="px-2.5 py-1.5 border border-rule rounded-sm bg-surface text-ink text-xs focus:ring-1 focus:ring-accent focus:outline-none"
+            >
+              {COMPANY_POOL_PRESETS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.valuationFormatted})
+                </option>
+              ))}
+              <option value="custom">Custom parameters</option>
+            </select>
+          </div>
+        }
+      />
+
+      {/* Runway warning callout if critical */}
+      {runwayResult.isRunwayCritical && (
+        <Callout variant="warn">
+          Pool runway is below 4 quarters (~{runwayResult.runwayMonths} months). At current quarterly grant velocity, the pool will require Board expansion of approximately {units(runwayResult.recommendedExpansionShares)} shares to maintain an 8-quarter buffer.
+        </Callout>
+      )}
+
+      {/* Hero Figure Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-5 border border-rule rounded-sm bg-surface text-xs">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold mb-2">
-            <Users className="w-3.5 h-3.5" />
-            <span>Corporate Equity & HR View</span>
+          <span className="text-muted block text-[11px]">Authorized ESOP pool</span>
+          <div className="font-mono text-xl font-bold text-ink tabular-nums mt-0.5">
+            {units(runwayResult.totalPoolShares)}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            Company ESOP Pool & Cap Table Analytics
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Aggregate option pool allocation, equity overhang ratios, and department distribution
-          </p>
+          <span className="text-[11px] text-muted block mt-1">
+            {runwayResult.poolPercent}% of fully diluted shares
+          </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Company:</span>
-          <select
-            value={selectedCompany}
-            onChange={(e) => setSelectedCompany(e.target.value)}
-            className="px-3 py-1.5 text-xs font-semibold bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          >
-            <option value="Stripe">Stripe (15.0% Pool)</option>
-            <option value="Databricks">Databricks (12.5% Pool)</option>
-            <option value="Figma">Figma (14.0% Pool)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-900/90 rounded-2xl p-5 border border-slate-800 shadow-card space-y-2">
-          <span className="text-slate-400 text-xs font-medium block">Total Authorized ESOP Pool</span>
-          <div className="text-2xl font-extrabold text-white font-mono">
-            {poolData.totalPoolShares.toLocaleString()}{' '}
-            <span className="text-xs font-normal text-slate-400">shares</span>
+        <div>
+          <span className="text-muted block text-[11px]">Granted / allocated shares</span>
+          <div className="font-mono text-xl font-bold text-ink tabular-nums mt-0.5">
+            {units(runwayResult.grantedShares)}
           </div>
-          <div className="text-xs text-emerald-400 font-semibold pt-1 border-t border-slate-800">
-            15.0% of Fully Diluted Shares
-          </div>
+          <span className="text-[11px] text-muted block mt-1">
+            {runwayResult.grantedPercentOfPool}% of pool granted ({runwayResult.overhangPercent}% overhang)
+          </span>
         </div>
 
-        <div className="bg-slate-900/90 rounded-2xl p-5 border border-slate-800 shadow-card space-y-2">
-          <span className="text-slate-400 text-xs font-medium block">Allocated / Granted Units</span>
-          <div className="text-2xl font-extrabold text-emerald-400 font-mono">
-            {poolData.grantedShares.toLocaleString()}
+        <div>
+          <span className="text-muted block text-[11px]">Unallocated reserve</span>
+          <div className="font-mono text-xl font-bold text-ink tabular-nums mt-0.5">
+            {units(runwayResult.unallocatedReserve)}
           </div>
-          <div className="text-xs text-slate-400 pt-1 border-t border-slate-800">
-            74.7% of authorized pool granted
-          </div>
+          <span className="text-[11px] text-muted block mt-1">
+            {runwayResult.unallocatedPercentOfPool}% of pool available for new grants
+          </span>
         </div>
 
-        <div className="bg-slate-900/90 rounded-2xl p-5 border border-slate-800 shadow-card space-y-2">
-          <span className="text-slate-400 text-xs font-medium block">Unallocated Reserve</span>
-          <div className="text-2xl font-extrabold text-indigo-400 font-mono">
-            {poolData.unallocatedReserve.toLocaleString()}
+        <div>
+          <span className="text-muted block text-[11px]">Projected pool runway</span>
+          <div className="font-mono text-xl font-bold tabular-nums mt-0.5 flex items-center gap-2">
+            <span className={runwayResult.isRunwayCritical ? 'text-loss' : 'text-gain'}>
+              ~{runwayResult.runwayQuarters} Qtrs
+            </span>
+            <Badge tone={runwayResult.isRunwayCritical ? 'loss' : 'gain'}>
+              {runwayResult.isRunwayCritical ? 'Low reserve' : 'Healthy buffer'}
+            </Badge>
           </div>
-          <div className="text-xs text-slate-400 pt-1 border-t border-slate-800">
-            Available for new hires & refreshes
-          </div>
-        </div>
-
-        <div className="bg-slate-900/90 rounded-2xl p-5 border border-slate-800 shadow-card space-y-2">
-          <span className="text-slate-400 text-xs font-medium block">Estimated Pool Runway</span>
-          <div className="text-2xl font-extrabold text-amber-400 font-mono">
-            ~8 Quarters
-          </div>
-          <div className="text-xs text-slate-400 pt-1 border-t border-slate-800">
-            At ~450k shares/quarter burn rate
-          </div>
+          <span className="text-[11px] text-muted block mt-1">
+            At {units(runwayResult.burnRatePerQuarter)} shares/quarter burn
+          </span>
         </div>
       </div>
 
-      {/* Main Visuals Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Visual 1: Pie Chart Distribution */}
-        <div className="bg-slate-900/90 rounded-2xl p-6 border border-slate-800 shadow-card space-y-4">
-          <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <PieIcon className="w-4 h-4 text-emerald-400" />
-              Pool Allocation Breakdown
-            </h3>
-            <p className="text-xs text-slate-400">Granted options vs vested RSUs vs remaining pool reserve</p>
+      {/* Main Two-Panel: Parameters (Left) & Allocation breakdown (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Parameters (5 cols) */}
+        <section className="lg:col-span-5 border border-rule rounded-sm bg-surface p-5 space-y-4">
+          <div className="border-b border-rule pb-2">
+            <h2 className="font-serif text-sm font-semibold text-ink">
+              Cap table parameters
+            </h2>
+            <p className="text-[11px] text-muted">
+              Adjust parameters to model hiring expansion or refreshed pool sizing.
+            </p>
           </div>
 
-          <div className="h-60 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={poolDistribution}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={85}
-                  innerRadius={50}
-                  paddingAngle={4}
-                >
-                  {poolDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0b1120', borderRadius: '8px', border: '1px solid #1e293b', color: '#ffffff', fontSize: '12px' }}
-                  formatter={(val: any) => [`${Number(val).toLocaleString()} shares`, 'Quantity']}
+          <div className="space-y-3 text-xs">
+            <Field label="Total authorized company shares">
+              <input
+                type="number"
+                value={authorizedShares}
+                onChange={(e) => {
+                  setAuthorizedShares(Number(e.target.value) || 0);
+                  setSelectedPresetId('custom');
+                }}
+                className="w-full px-3 py-1.5 bg-surface text-ink border border-rule rounded-sm text-xs font-mono tabular-nums focus:ring-1 focus:ring-accent focus:outline-none"
+              />
+            </Field>
+
+            <Field label="Total authorized option pool shares">
+              <input
+                type="number"
+                value={poolShares}
+                onChange={(e) => {
+                  setPoolShares(Number(e.target.value) || 0);
+                  setSelectedPresetId('custom');
+                }}
+                className="w-full px-3 py-1.5 bg-surface text-ink border border-rule rounded-sm text-xs font-mono tabular-nums focus:ring-1 focus:ring-accent focus:outline-none"
+              />
+            </Field>
+
+            <Field label="Already granted / committed shares">
+              <input
+                type="number"
+                value={grantedShares}
+                onChange={(e) => {
+                  setGrantedShares(Number(e.target.value) || 0);
+                  setSelectedPresetId('custom');
+                }}
+                className="w-full px-3 py-1.5 bg-surface text-ink border border-rule rounded-sm text-xs font-mono tabular-nums focus:ring-1 focus:ring-accent focus:outline-none"
+              />
+            </Field>
+
+            <Field label="Quarterly hiring burn rate (shares/quarter)">
+              <input
+                type="number"
+                value={burnRate}
+                onChange={(e) => {
+                  setBurnRate(Number(e.target.value) || 0);
+                  setSelectedPresetId('custom');
+                }}
+                className="w-full px-3 py-1.5 bg-surface text-ink border border-rule rounded-sm text-xs font-mono tabular-nums focus:ring-1 focus:ring-accent focus:outline-none"
+              />
+            </Field>
+          </div>
+
+          <div className="p-3 border border-rule/60 rounded-sm bg-sunk/40 text-[11px] text-muted space-y-1">
+            <strong>Venture benchmark:</strong> Seed/Series A pools typically range from 15% to 20%; Series B/C pools compress to 10% to 15% through unallocated reserve dilution.
+          </div>
+        </section>
+
+        {/* Allocation breakdown (7 cols) */}
+        <section className="lg:col-span-7 space-y-4">
+          <div className="border border-rule rounded-sm bg-surface p-5 space-y-4">
+            <h2 className="font-serif text-sm font-semibold text-ink">
+              Pool allocation distribution
+            </h2>
+
+            {/* Proportion Bar */}
+            <div className="space-y-1.5 text-xs">
+              <div className="flex items-center justify-between text-muted text-[11px]">
+                <span>Allocated: {runwayResult.grantedPercentOfPool}%</span>
+                <span>Unallocated reserve: {runwayResult.unallocatedPercentOfPool}%</span>
+              </div>
+              <div className="w-full h-3 bg-sunk rounded-sm overflow-hidden flex border border-rule">
+                <div
+                  className="bg-accent h-full transition-all"
+                  style={{ width: `${Math.min(100, runwayResult.grantedPercentOfPool)}%` }}
+                  title="Granted"
                 />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-xs text-center">
-            {poolDistribution.map(item => (
-              <div key={item.name} className="space-y-0.5">
-                <div className="flex items-center justify-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-[11px] text-slate-300 font-medium truncate">{item.name}</span>
-                </div>
-                <div className="font-mono font-bold text-white text-xs">{item.value.toLocaleString()}</div>
+                <div
+                  className="bg-rule h-full transition-all"
+                  style={{ width: `${Math.max(0, 100 - runwayResult.grantedPercentOfPool)}%` }}
+                  title="Reserve"
+                />
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Visual 2: Department Allocation Breakdown */}
-        <div className="bg-slate-900/90 rounded-2xl p-6 border border-slate-800 shadow-card space-y-4">
-          <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-emerald-400" />
-              Department Allocation Distribution
-            </h3>
-            <p className="text-xs text-slate-400">Cumulative option grants by functional organization</p>
-          </div>
-
-          <div className="space-y-3 pt-2">
-            {departmentBreakdown.map((item) => (
-              <div key={item.dept} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium text-slate-200">{item.dept}</span>
-                  <span className="font-mono font-bold text-emerald-400">{item.percent} ({item.units.toLocaleString()} units)</span>
-                </div>
-                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-emerald-500 h-full rounded-full transition-all" 
-                    style={{ width: item.percent }}
-                  />
-                </div>
+            {/* Department breakdown table */}
+            <div className="pt-2">
+              <span className="text-[11px] font-semibold text-muted uppercase tracking-wider block mb-2">
+                Departmental allocation
+              </span>
+              <div className="border border-rule rounded-sm overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-sunk border-b border-rule">
+                    <tr>
+                      <th className="p-2.5 font-semibold text-muted">Department</th>
+                      <th className="p-2.5 font-semibold text-muted text-right">Shares granted</th>
+                      <th className="p-2.5 font-semibold text-muted text-right">Share of grants</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-rule">
+                    {departments.map((dept) => (
+                      <tr key={dept.dept} className="hover:bg-sunk/30 transition-colors">
+                        <td className="p-2.5 font-medium text-ink">{dept.dept}</td>
+                        <td className="p-2.5 font-mono text-right tabular-nums text-ink">
+                          {units(dept.units)}
+                        </td>
+                        <td className="p-2.5 font-mono text-right tabular-nums text-muted font-semibold">
+                          {dept.percent}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
+            </div>
           </div>
-
-          <div className="pt-4 border-t border-slate-800 text-xs text-slate-400 leading-relaxed">
-            <strong>HR Equity Note:</strong> Technical roles (Engineering, Product, Architecture) represent 75% of cumulative equity distributions, consistent with Tier-1 Silicon Valley tech venture benchmarks.
-          </div>
-        </div>
-
+        </section>
       </div>
+
+      {/* 8-Quarter Runway Depletion Trajectory Table */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-sm font-semibold text-ink">
+            8-quarter pool depletion trajectory
+          </h2>
+          <span className="text-[11px] text-muted">
+            Projected reserve drawdown at {units(runwayResult.burnRatePerQuarter)} shares/quarter
+          </span>
+        </div>
+
+        <div className="border border-rule rounded-sm overflow-hidden bg-surface">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-sunk border-b border-rule">
+              <tr>
+                <th className="p-3 font-semibold text-muted">Quarter</th>
+                <th className="p-3 font-semibold text-muted text-right">Starting reserve</th>
+                <th className="p-3 font-semibold text-muted text-right">Quarterly burn</th>
+                <th className="p-3 font-semibold text-muted text-right">Ending reserve</th>
+                <th className="p-3 font-semibold text-muted text-right">Cumulative burn</th>
+                <th className="p-3 font-semibold text-muted text-right">Pool remaining %</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-rule">
+              {runwayResult.projections.map((p) => {
+                const isZero = p.endingReserve === 0;
+                return (
+                  <tr
+                    key={p.quarter}
+                    className={`hover:bg-sunk/30 transition-colors ${isZero ? 'bg-loss/5' : ''}`}
+                  >
+                    <td className="p-3 font-medium text-ink">{p.quarterLabel}</td>
+                    <td className="p-3 font-mono text-right tabular-nums text-ink">{units(p.startingReserve)}</td>
+                    <td className="p-3 font-mono text-right tabular-nums text-muted">{units(p.sharesBurned)}</td>
+                    <td className={`p-3 font-mono text-right tabular-nums font-semibold ${isZero ? 'text-loss' : 'text-ink'}`}>
+                      {units(p.endingReserve)}
+                    </td>
+                    <td className="p-3 font-mono text-right tabular-nums text-muted">{units(p.cumulativeBurn)}</td>
+                    <td className="p-3 font-mono text-right tabular-nums">
+                      {isZero ? (
+                        <span className="text-loss font-semibold">Exhausted</span>
+                      ) : (
+                        <span className="text-ink">{p.percentRemaining}%</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }
-

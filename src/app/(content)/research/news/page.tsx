@@ -1,18 +1,27 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Newspaper, 
-  ExternalLink, 
-  Clock, 
-  RefreshCw 
-} from 'lucide-react';
+import { PageHeader, Badge, Button, Callout } from '@/components/ui';
+import { date, relativeDays } from '@/lib/format';
+
+interface NewsItem {
+  id: string;
+  category: string;
+  headline: string;
+  summary: string;
+  source: string;
+  url: string;
+  datetime: number;
+  relatedTicker?: string;
+  image?: string;
+}
 
 export default function NewsFeedPage() {
-  const [news, setNews] = useState<any[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
   const [category, setCategory] = useState<string>('general');
   const [loading, setLoading] = useState(true);
   const [sourceNotice, setSourceNotice] = useState<string>('');
+  const [isSimulated, setIsSimulated] = useState(false);
 
   const fetchNews = async (cat: string) => {
     setLoading(true);
@@ -22,6 +31,7 @@ export default function NewsFeedPage() {
         const data = await res.json();
         setNews(data.news || []);
         setSourceNotice(data.source || 'Market Feed');
+        setIsSimulated(Boolean(data.isSimulated));
       }
     } catch (err) {
       console.error(err);
@@ -35,98 +45,97 @@ export default function NewsFeedPage() {
   }, [category]);
 
   const categories = [
-    { id: 'general', label: 'All Market News' },
+    { id: 'general', label: 'All market news' },
     { id: 'tech', label: 'Technology' },
-    { id: 'business', label: 'Business & Finance' },
+    { id: 'business', label: 'Venture and finance' },
   ];
 
   return (
-    <div className="space-y-8 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            <Newspaper className="w-7 h-7 text-emerald-400" />
-            Live Market News & Tech Coverage
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Real-time coverage of private valuations, IPO pipelines, and venture capital trends via Finnhub API
-          </p>
-        </div>
+    <div className="space-y-6 pb-12">
+      <PageHeader
+        eyebrow="Research"
+        title="News"
+        contextSentence="Curated venture capital coverage, secondary tender offers, and regulatory shifts affecting equity holders."
+        actions={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => fetchNews(category)}
+            disabled={loading}
+          >
+            {loading ? 'Refreshing...' : 'Refresh feed'}
+          </Button>
+        }
+      />
 
-        <button
-          onClick={() => fetchNews(category)}
-          className="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:text-white self-start sm:self-auto transition-colors"
-          title="Refresh Feed"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
+      {/* Source transparency notice */}
+      <Callout variant="note">
+        Source transparency: Headlines are retrieved from {sourceNotice}. Articles are tagged with verification status to distinguish live API feeds from curated reference samples.
+      </Callout>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
-        {categories.map(cat => (
+      <div className="flex items-center gap-2 border-b border-rule pb-2 text-xs">
+        {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setCategory(cat.id)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+            className={`px-3 py-1.5 rounded-sm font-medium transition-colors ${
               category === cat.id
-                ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                ? 'bg-accent text-white font-semibold'
+                : 'text-muted hover:text-ink hover:bg-sunk/60'
             }`}
           >
             {cat.label}
           </button>
         ))}
+        <span className="text-muted ml-auto font-mono text-[11px] tabular-nums">
+          {news.length} articles
+        </span>
       </div>
 
-      {/* News Articles Grid */}
-      <div className="space-y-4">
+      {/* News Articles List */}
+      <div className="space-y-3">
         {news.map((item) => (
-          <article 
+          <article
             key={item.id}
-            className="bg-slate-900/90 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-sm p-5 sm:p-6 hover:border-slate-700 transition-colors space-y-3"
+            className="p-4 sm:p-5 border border-rule rounded-sm bg-surface hover:border-rule/80 transition-colors space-y-2.5"
           >
-            <div className="flex items-center justify-between text-xs text-slate-400">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-2 py-0.5 rounded text-[10px] uppercase">
-                  {item.category || 'General'}
+                <span className="font-semibold text-ink">{item.source}</span>
+                <Badge tone={isSimulated ? 'neutral' : 'gain'}>
+                  {isSimulated ? 'Sample archive' : 'Live wire'}
+                </Badge>
+                <span className="text-muted text-[11px] uppercase tracking-wider">
+                  {item.category}
                 </span>
-                <span className="font-semibold text-slate-300">{item.source}</span>
               </div>
-              <span className="flex items-center gap-1 font-mono text-[11px] text-slate-400">
-                <Clock className="w-3.5 h-3.5 text-slate-500" />
-                {new Date(item.datetime).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
+              <span className="font-mono text-[11px] text-muted tabular-nums">
+                {date(item.datetime)} ({relativeDays(item.datetime)})
               </span>
             </div>
 
-            <h3 className="text-base sm:text-lg font-bold text-white leading-snug">
+            <h3 className="font-serif text-base font-semibold text-ink leading-snug">
               {item.headline}
             </h3>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-muted leading-relaxed">
               {item.summary}
             </p>
 
-            <div className="pt-2 flex items-center justify-between border-t border-slate-800">
+            <div className="pt-2 flex items-center justify-between border-t border-rule/60 text-xs">
               <a
                 href={item.url}
                 target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
+                rel="noopener noreferrer"
+                className="font-medium text-ink hover:text-accent underline underline-offset-2"
               >
-                <span>Read Original Article</span>
-                <ExternalLink className="w-3.5 h-3.5" />
+                Read original source →
               </a>
 
               {item.relatedTicker && (
-                <span className="text-[10px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
-                  Tag: {item.relatedTicker}
+                <span className="font-mono text-[10px] text-muted bg-sunk px-1.5 py-0.5 rounded-sm border border-rule">
+                  Ticker: {item.relatedTicker}
                 </span>
               )}
             </div>
@@ -134,7 +143,7 @@ export default function NewsFeedPage() {
         ))}
 
         {news.length === 0 && !loading && (
-          <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-12 text-center text-xs text-slate-400">
+          <div className="p-8 border border-rule rounded-sm text-center text-xs text-muted bg-surface">
             No news articles found for this category.
           </div>
         )}

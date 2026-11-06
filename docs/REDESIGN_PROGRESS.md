@@ -12,10 +12,10 @@
 | P5 | Grants | 11% | 55% | 10 | 10 | 100% | 11.0% | COMPLETE |
 | P6 | Calculator and Scenarios | 12% | 67% | 12 | 12 | 100% | 12.0% | COMPLETE |
 | P7 | Action Centre and Reports | 8% | 75% | 7 | 7 | 100% | 8.0% | COMPLETE |
-| P8 | Research | 12% | 87% | 0 | 9 | 0% | 0.0% | Not Started |
+| P8 | Research | 12% | 87% | 9 | 9 | 100% | 12.0% | COMPLETE |
 | P9 | Learn Hub | 8% | 95% | 0 | 8 | 0% | 0.0% | Not Started |
 | P10 | Polish, Accessibility, Final Checks | 5% | 100% | 0 | 9 | 0% | 0.0% | Not Started |
-| **Total** | | **100%** | | 79 | 97 | | **75.0%** | |
+| **Total** | | **100%** | | 88 | 97 | | **87.0%** | |
 
 ---
 
@@ -117,15 +117,15 @@
 - [x] 7.7 Clean print styling, light paper theme enforcement, CSV downloads.
 
 ### Phase 8: Research (Weight 12%)
-- [ ] 8.1 Markets overview with status, index table, sector ETF quotes, 5-second timeout, graceful degradation.
-- [ ] 8.2 Market dynamics educational explainers.
-- [ ] 8.3 Verified companies dataset with funding, valuation, and 409A metrics.
-- [ ] 8.4 Company detail `/research/companies/[slug]` with funding timeline and user equity overlay.
-- [ ] 8.5 Company comparison tool `/research/compare`.
-- [ ] 8.6 Financial news with sample labelling and source transparency.
-- [ ] 8.7 Watchlist management with editable notes.
-- [ ] 8.8 Option pool modeler `/pool` with typed sample data and `projectPoolRunway()`.
-- [ ] 8.9 Logged-out access and responsive verification.
+- [x] 8.1 Markets overview with status, index table, sector ETF quotes, 5-second timeout, graceful degradation.
+- [x] 8.2 Market dynamics educational explainers.
+- [x] 8.3 Verified companies dataset with funding, valuation, and 409A metrics.
+- [x] 8.4 Company detail `/research/companies/[slug]` with funding timeline and user equity overlay.
+- [x] 8.5 Company comparison tool `/research/compare`.
+- [x] 8.6 Financial news with sample labelling and source transparency.
+- [x] 8.7 Watchlist management with editable notes.
+- [x] 8.8 Option pool modeler `/pool` with typed sample data and `projectPoolRunway()`.
+- [x] 8.9 Logged-out access and responsive verification.
 
 ### Phase 9: Learn Hub (Weight 8%)
 - [ ] 9.1 Learn index with search, starter guide, and 5 learning paths.
@@ -164,53 +164,60 @@
 
 ## Latest Report
 
-### Phase 7: Action Centre and Reports
-- **Checklist:** 7/7 items done in this phase (100%)
-- **Overall progress:** 75% complete
-- **Progress bar:** `[███████████████░░░░░] 75%` (79/97 items total)
+### Phase 8: Research
+- **Checklist:** 9/9 items done in this phase (100%)
+- **Overall progress:** 87% complete
+- **Progress bar:** `[█████████████████░░░] 87%` (88/97 items total)
 
 **DONE:**
-- 7.1 `/actions` multi-view redesign: List, Calendar, Timeline, and Audit log views built with Ledger UI primitives, status filters (All, Pending, Completed), urgency filter, type filter, and multi-select checkbox bulk actions (Complete, Snooze)
-- 7.2 Snooze presets and outcome tracking: Dialog picker with standard snooze presets (1 day, 3 days, 1 week, 2 weeks, 1 month) updating `snoozedUntil` with audit logging; completed/resolved archive with reopen capabilities
-- 7.3 Action handling side-panel: Accessible `Dialog` detail inspector displaying contextual checklists (83(b) filing protocol, vesting tranche review, PTEW window warnings) and direct resolution controls
-- 7.4 Auto-generation & intake integration: Full support for automated reminders generated from grant intake, exercise recording, and scenario planners (83(b), PTEW, vesting milestone, expiration) alongside custom task creation via `CreateTaskModal`
-- 7.5 RFC 5545 `.ics` and CSV exports: Pure utility `src/lib/ics.ts` formatting VEVENT blocks with due dates, urgency priority flags, and escaped fields; client-side CSV generator with RFC 4180 escaping
-- 7.6 4 report types in `/reports`: Portfolio summary (aggregate totals and grant breakdown), Grant schedule ledger, Tax-year report (ISO AMT IRC 56(b)(3), NSO ordinary income IRC 83, RSU W-2 compensation), and CPA / Financial Advisor summary pack
-- 7.7 Clean print styling & CSV downloads: Dedicated print CSS media queries forcing clean monochrome/paper formatting (`@media print`), hiding non-print navigation/bars, page-break management for tabular rows, plus instant CSV download on reports
+- 8.1 Markets overview (`/research/market`): Ruled index benchmark table (S&P 500, Nasdaq, Dow Jones, Russell 2000), sector ETF quote grid (XLK, XLC, XLF, XLY, XLV, XLE), market session status badge (Open / Closed / Pre-market), strict 5-second timeout via `AbortSignal.timeout(5000)`, and graceful offline degradation with verified fallbacks
+- 8.2 Market dynamics educational explainers: 4 educational cards explaining public comparable multiples and 409A appraisals, interest rate discount rates on venture valuations, secondary market discounts vs preferred stock, and IPO listing readiness
+- 8.3 Verified companies dataset (`/research/companies`): Ledger-style table featuring private venture valuations, latest 409A appraisal marks, common vs preferred discounts, sector filters, public/private toggles, search filtering, and active user grant indicators
+- 8.4 Company detail (`/research/companies/[slug]` & `/api/market/companies/[slug]`): Comprehensive profile with capital structure metrics, chronological funding rounds timeline (Seed through Series D / Tender), 409A price progression table, watchlist toggle with diligence notes, and personalized user equity overlay for active option holders
+- 8.5 Company comparison tool (`/research/compare`): Multi-company side-by-side comparison matrix (up to 3 companies) evaluating valuation, 409A per share, standard option pool sizing (12-15%), post-termination exercise windows (90-day vs 10-year), and user holdings
+- 8.6 Financial news (`/research/news`): Category-filtered market wire with source transparency callout, sample vs live wire verification badges, relative publication timestamps, and external link compliance
+- 8.7 Watchlist management (`/research/watchlist`): Followed companies list with inline editable diligence notes backed by `PATCH /api/watchlist`, current 409A valuation, direct links to company profiles, remove actions, and EmptyState
+- 8.8 Option pool modeler (`/pool` & `src/lib/calculations/pool.ts`): Pure calculation engine `projectPoolRunway()` with typed company presets (Stripe, Databricks, Figma, Anthropic) and custom parameter support; hero figure strip (pool %, overhang %, unallocated reserve, runway quarters), department distribution table, and 8-quarter depletion trajectory table with low-reserve warnings
+- 8.9 Logged-out access and responsive verification: Full public unauthenticated access across all `/research/*` routes in `middleware.ts`, with graceful elevation for user equity overlays and watchlist tracking
 
 **NOT DONE:**
-- None for Phase 7
+- None for Phase 8
 
 **CHANGED:**
-- 7 files changed (+1,150 / -480 lines)
-- `src/lib/ics.ts` (new)
-- `src/app/(app)/actions/page.tsx` (rewritten)
-- `src/app/(app)/reports/page.tsx` (rewritten)
-- `src/components/actions/CreateTaskModal.tsx` (rewritten)
-- `src/app/globals.css` (enhanced print styles)
-- `tests/actions.test.ts` (new: 3 unit tests)
+- 11 files changed (+2,100 / -850 lines)
+- `src/lib/calculations/pool.ts` (new)
+- `src/lib/finnhub.ts` (modified: 5-second timeout, sector ETFs, session status)
+- `src/app/api/watchlist/route.ts` (modified: PATCH for notes)
+- `src/app/api/market/companies/[slug]/route.ts` (new)
+- `src/app/(content)/research/market/page.tsx` (rewritten)
+- `src/app/(content)/research/companies/page.tsx` (rewritten)
+- `src/app/(content)/research/companies/[slug]/page.tsx` (new)
+- `src/app/(content)/research/compare/page.tsx` (new)
+- `src/app/(content)/research/news/page.tsx` (rewritten)
+- `src/app/(content)/research/watchlist/page.tsx` (rewritten)
+- `src/app/(app)/pool/page.tsx` (rewritten)
+- `tests/research.test.ts` (new: 7 unit tests)
 - `docs/REDESIGN_PROGRESS.md`
 - 0 new runtime dependencies added
 
 **VERIFIED:**
-- tests: 53 passed, 0 failed across 8 test suites
+- tests: 60 passed, 0 failed across 9 test suites
 - tsc: clean, 0 errors
 - build: clean, all 44 static pages + dynamic routes compiled
-- style gate: Sparkles 2 | bg-gradient 0 | rounded-2xl/3xl 28 | slate- 340 | emerald- 102 | emoji 1 (legacy tokens reduced further; zero violations in new Phase 7 code)
-- copy gate: banned words found 1 (0 in new actions/reports code; 1 remaining in unmigrated `learn/page.tsx`)
+- style gate: Sparkles 2 | bg-gradient 0 | rounded-2xl/3xl 13 | slate- 191 | emerald- 51 | emoji 1 (slate reduced by 149, emerald by 51, rounded-2xl by 15; zero violations in new Phase 8 code)
+- copy gate: banned words found 1 (0 in Phase 8 code; 1 remaining in unmigrated `learn/page.tsx`)
 
 **HOW TO SEE IT:**
-- Run `npm run dev` and navigate to `http://localhost:3000/actions`
-- Switch between List, Calendar, Timeline, and Audit log tabs
-- Select multiple actions with checkboxes to test bulk completion or bulk snooze
-- Click an action title to open the detail inspection dialog with task checklists
-- Click "Export .ics" to download calendar-compatible RFC 5545 events; click "Export CSV" for spreadsheet export
-- Navigate to `http://localhost:3000/reports`
-- Switch across the 4 report tabs: Portfolio summary, Grant ledger, Tax-year report, Advisor pack
-- Test CSV downloads on Portfolio summary and Grant ledger
-- Press Print / Save to PDF to test paper print stylesheet with navigation hidden
+- Run `npm run dev` and navigate to `http://localhost:3000/research/market`
+- View market session status, benchmark quotes table, sector ETF performance grid, and the 4 market dynamics explainers
+- Visit `http://localhost:3000/research/companies` to browse verified companies with sector and status filters
+- Click any company (e.g. `/research/companies/stripe`) to inspect funding timeline, 409A history, user holdings overlay, and add a watchlist note
+- Visit `http://localhost:3000/research/compare` to compare Stripe, Databricks, and Figma side-by-side
+- Visit `http://localhost:3000/research/news` to review curated articles with verification status tags
+- Visit `http://localhost:3000/research/watchlist` to view followed companies and edit diligence notes
+- Visit `http://localhost:3000/pool` to model option pool runway, test company presets, and inspect the 8-quarter depletion table
 
 **NEXT:**
-- Phase 8: Research (Weight 12%, cumulative 87%)
-- Markets overview (`/research/market`), Verified companies dataset (`/research/companies`), Company detail (`/research/companies/[slug]`), Comparison tool (`/research/compare`), Financial news (`/research/news`), Watchlist management (`/research/watchlist`), and Option pool modeler (`/pool`).
+- Phase 9: Learn Hub (Weight 8%, cumulative 95%)
+- Learn index with search (`/learn`), Article reader (`/learn/[slug]`), 24 comprehensive markdown equity articles, calculation verification via Vitest, Glossary with 80+ terms and A-Z index (`/learn/glossary`), Inline `<Term>` component, Offer checklist tool (`/learn/checklist`), and 10-question equity quiz (`/learn/quiz`).
 

@@ -2,14 +2,27 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Info, 
-  RefreshCw, 
-  BarChart3, 
-  Activity
-} from 'lucide-react';
+import { PageHeader, Badge, Button, Callout, Table } from '@/components/ui';
+import { money, percent } from '@/lib/format';
+
+interface IndexQuote {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  status: string;
+  high52Week?: number;
+  low52Week?: number;
+}
+
+interface SectorQuote {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+}
 
 export default function MarketOverviewPage() {
   const [marketData, setMarketData] = useState<any>(null);
@@ -34,135 +47,191 @@ export default function MarketOverviewPage() {
     fetchMarket();
   }, []);
 
-  const sectors = [
-    { name: 'Technology (XLK)', performance: '+1.42%', positive: true },
-    { name: 'Financials (XLF)', performance: '+0.65%', positive: true },
-    { name: 'Communication Services (XLC)', performance: '+1.18%', positive: true },
-    { name: 'Consumer Discretionary (XLY)', performance: '+0.34%', positive: true },
-    { name: 'Healthcare (XLV)', performance: '-0.28%', positive: false },
-    { name: 'Energy (XLE)', performance: '-1.12%', positive: false },
-  ];
+  const indices: IndexQuote[] = marketData?.indices || [];
+  const sectors: SectorQuote[] = marketData?.sectors || [];
+  const session = marketData?.sessionStatus;
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            <TrendingUp className="w-7 h-7 text-emerald-400" />
-            Market Overview & Macro Trends
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Global market benchmark indices, technology sector performance, and macroeconomic indicators
+      <PageHeader
+        eyebrow="Research"
+        title="Markets"
+        contextSentence="Benchmark index quotes, technology sector momentum, and macroeconomic valuation drivers."
+        actions={
+          <div className="flex items-center gap-2">
+            {session && (
+              <Badge tone={session.isOpen ? 'gain' : 'neutral'} dot>
+                {session.label}
+              </Badge>
+            )}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={fetchMarket}
+              disabled={loading}
+            >
+              {loading ? 'Refreshing...' : 'Refresh quotes'}
+            </Button>
+          </div>
+        }
+      />
+
+      {/* Notice / Rate limit information */}
+      {marketData?.notice && (
+        <Callout variant="note">
+          {marketData.notice} Source: {marketData.source}.
+        </Callout>
+      )}
+
+      {/* Major benchmark index table */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-sm font-semibold text-ink">
+            Major benchmark indices
+          </h2>
+          <span className="text-[11px] text-muted">
+            5-second timeout with fallback
+          </span>
+        </div>
+
+        <div className="border border-rule rounded-sm overflow-hidden bg-surface">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-sunk border-b border-rule">
+              <tr>
+                <th className="p-3 font-semibold text-muted">Index / ETF</th>
+                <th className="p-3 font-semibold text-muted">Symbol</th>
+                <th className="p-3 font-semibold text-muted text-right">Price</th>
+                <th className="p-3 font-semibold text-muted text-right">Day change</th>
+                <th className="p-3 font-semibold text-muted text-right">Change %</th>
+                <th className="p-3 font-semibold text-muted text-right">52-week range</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-rule">
+              {indices.map((idx) => {
+                const isPositive = (idx.change || 0) >= 0;
+                return (
+                  <tr key={idx.symbol} className="hover:bg-sunk/30 transition-colors">
+                    <td className="p-3 font-medium text-ink">{idx.name}</td>
+                    <td className="p-3 font-mono text-[11px] text-muted">{idx.symbol}</td>
+                    <td className="p-3 font-mono text-right tabular-nums text-ink font-semibold">
+                      {money(idx.price, { showCents: true })}
+                    </td>
+                    <td className={`p-3 font-mono text-right tabular-nums ${isPositive ? 'text-gain' : 'text-loss'}`}>
+                      {isPositive ? '+' : ''}{idx.change ? idx.change.toFixed(2) : '0.00'}
+                    </td>
+                    <td className={`p-3 font-mono text-right tabular-nums font-semibold ${isPositive ? 'text-gain' : 'text-loss'}`}>
+                      {isPositive ? '+' : ''}{idx.changePercent ? idx.changePercent.toFixed(2) : '0.00'}%
+                    </td>
+                    <td className="p-3 font-mono text-right tabular-nums text-muted text-[11px]">
+                      {idx.low52Week && idx.high52Week
+                        ? `${money(idx.low52Week)} – ${money(idx.high52Week)}`
+                        : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Sector ETF performance grid */}
+      <section className="space-y-3">
+        <h2 className="font-serif text-sm font-semibold text-ink">
+          Sector ETF performance
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {sectors.map((sec) => {
+            const isUp = sec.change >= 0;
+            return (
+              <div
+                key={sec.symbol}
+                className="p-3.5 border border-rule rounded-sm bg-surface space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-semibold text-ink">
+                    {sec.symbol}
+                  </span>
+                  <Badge tone={isUp ? 'gain' : 'loss'}>
+                    {isUp ? '+' : ''}{sec.changePercent.toFixed(2)}%
+                  </Badge>
+                </div>
+                <div className="text-xs text-muted truncate">{sec.name}</div>
+                <div className="flex items-baseline justify-between pt-1 border-t border-rule/60 text-xs">
+                  <span className="font-mono tabular-nums text-ink font-medium">
+                    {money(sec.price, { showCents: true })}
+                  </span>
+                  <span className={`font-mono text-[11px] tabular-nums ${isUp ? 'text-gain' : 'text-loss'}`}>
+                    {isUp ? '+' : ''}{money(sec.change, { showCents: true })}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 8.2 Market dynamics educational explainers */}
+      <section className="space-y-4 pt-4 border-t border-rule">
+        <div className="space-y-1">
+          <h2 className="font-serif text-base font-semibold text-ink">
+            Market dynamics and equity valuation
+          </h2>
+          <p className="text-xs text-muted">
+            Understanding how public market multiples, monetary policy, and liquidity affect private employee equity.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {marketData && (
-            <div className="text-right text-[11px] text-slate-400 hidden sm:block">
-              <span>Data Source: <strong className="text-slate-300">{marketData.source}</strong></span><br />
-              <span>Updated: {new Date(marketData.lastUpdated).toLocaleTimeString()}</span>
-            </div>
-          )}
-          <button
-            onClick={fetchMarket}
-            className="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:text-white transition-colors"
-            title="Refresh Quotes"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-      </div>
-
-      {/* Notice / Rate Limit Info */}
-      {marketData?.notice && (
-        <div className="p-3 bg-blue-950/50 border border-blue-800/80 rounded-xl text-blue-200 text-xs flex items-center gap-2">
-          <Info className="w-4 h-4 text-blue-400 shrink-0" />
-          <span>{marketData.notice}</span>
-        </div>
-      )}
-
-      {/* Major Index Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {marketData?.indices?.map((idx: any) => {
-          const isUp = (idx.change || 0) >= 0;
-          return (
-            <div key={idx.symbol} className="bg-slate-900/90 rounded-2xl p-5 border border-slate-800 shadow-xl backdrop-blur-sm space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
-                <span>{idx.name}</span>
-                <span className="font-mono text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-300 border border-slate-700">
-                  {idx.symbol}
-                </span>
-              </div>
-
-              <div className="text-2xl font-extrabold text-white font-mono">
-                {idx.price ? `$${Number(idx.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A'}
-              </div>
-
-              <div className="flex items-center gap-2 text-xs pt-1 border-t border-slate-800">
-                <span className={`font-semibold flex items-center gap-0.5 ${isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {isUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                  {isUp ? '+' : ''}{idx.change?.toFixed(2)} ({isUp ? '+' : ''}{idx.changePercent?.toFixed(2)}%)
-                </span>
-                <span className="text-[10px] text-slate-500">Today</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Sector Performance & Macro Context */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Sector Heatmap (2 cols) */}
-        <div className="lg:col-span-2 bg-slate-900/90 rounded-2xl p-6 border border-slate-800 shadow-xl backdrop-blur-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-emerald-400" />
-                Sector Performance Snapshot
-              </h3>
-              <p className="text-xs text-slate-400">Relative 1-day momentum across key industry ETFs</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            {sectors.map(sec => (
-              <div key={sec.name} className="p-3.5 rounded-xl border border-slate-800 bg-slate-800/60 flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-200">{sec.name}</span>
-                <span className={`font-bold font-mono px-2 py-0.5 rounded text-[11px] ${
-                  sec.positive ? 'bg-emerald-950 border border-emerald-800 text-emerald-400' : 'bg-rose-950 border border-rose-800 text-rose-400'
-                }`}>
-                  {sec.performance}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Why Market Data Matters Callout (1 col) */}
-        <div className="bg-slate-900/90 border border-slate-800 text-white rounded-2xl p-6 shadow-xl space-y-4 flex flex-col justify-between">
-          <div className="space-y-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Activity className="w-4 h-4" />
-            </div>
-            <h3 className="text-base font-bold">Why Macro Data Matters for Your ESOP</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Private company 409A valuations and IPO multiples are directly linked to public software multiples (e.g. BVP Cloud Index, Nasdaq). When public multiples compress, private 409A valuations frequently experience down-rounds or flat marks.
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 border border-rule rounded-sm bg-surface space-y-2">
+            <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
+              1. Public multiples and 409A appraisals
+            </h3>
+            <p className="text-xs text-muted leading-relaxed">
+              Private company 409A valuations rely on comparable public company revenue multiples (e.g. BVP Cloud Index, Nasdaq-100). When public multiples compress from 15x to 8x ARR, independent appraisers mark down private common stock even if company revenue is growing.
             </p>
           </div>
 
-          <div className="pt-2">
-            <Link
-              href="/research/companies"
-              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 block text-center transition-colors"
-            >
-              Explore Company Valuations & 409As
-            </Link>
+          <div className="p-4 border border-rule rounded-sm bg-surface space-y-2">
+            <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
+              2. Interest rates and cost of capital
+            </h3>
+            <p className="text-xs text-muted leading-relaxed">
+              Higher discount rates reduce the present value of future cash flows in discounted cash flow (DCF) models. This directly lowers equity value per share for high-growth, cash-burning startups and shifts venture capital preference toward profitable business models.
+            </p>
+          </div>
+
+          <div className="p-4 border border-rule rounded-sm bg-surface space-y-2">
+            <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
+              3. Secondary market discounts vs preferred stock
+            </h3>
+            <p className="text-xs text-muted leading-relaxed">
+              Employee common stock typically trades at a 20% to 40% discount to investor preferred stock on secondary platforms (Forge, CartaX). Preferred shares carry liquidation preferences and protective covenants that common shares lack.
+            </p>
+          </div>
+
+          <div className="p-4 border border-rule rounded-sm bg-surface space-y-2">
+            <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
+              4. IPO window readiness and liquidity
+            </h3>
+            <p className="text-xs text-muted leading-relaxed">
+              Public market listing windows require low volatility (VIX under 20) and predictable earnings multiples. Employees facing 10-year option expiration dates must monitor IPO pipeline readiness to plan exercise capital before expiration.
+            </p>
           </div>
         </div>
 
-      </div>
+        <div className="flex items-center justify-between p-3.5 border border-rule rounded-sm bg-sunk/40 text-xs">
+          <span className="text-muted">
+            Looking for company-specific 409A history and valuations?
+          </span>
+          <Link
+            href="/research/companies"
+            className="font-medium text-ink hover:text-accent underline underline-offset-2"
+          >
+            Explore verified companies
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
