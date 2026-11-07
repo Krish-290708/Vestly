@@ -106,8 +106,9 @@ export default function CompanyComparisonPage() {
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <div>
-            <label className="text-muted block text-[11px] mb-1">Company 1</label>
+            <label htmlFor="compare-company-1" className="text-muted block text-[11px] mb-1">Company 1</label>
             <select
+              id="compare-company-1"
               value={companyA}
               onChange={(e) => setCompanyA(e.target.value)}
               className="w-full px-2.5 py-1.5 border border-rule rounded-sm bg-surface text-ink text-xs focus:ring-1 focus:ring-accent focus:outline-none"
@@ -119,8 +120,9 @@ export default function CompanyComparisonPage() {
           </div>
 
           <div>
-            <label className="text-muted block text-[11px] mb-1">Company 2</label>
+            <label htmlFor="compare-company-2" className="text-muted block text-[11px] mb-1">Company 2</label>
             <select
+              id="compare-company-2"
               value={companyB}
               onChange={(e) => setCompanyB(e.target.value)}
               className="w-full px-2.5 py-1.5 border border-rule rounded-sm bg-surface text-ink text-xs focus:ring-1 focus:ring-accent focus:outline-none"
@@ -132,8 +134,9 @@ export default function CompanyComparisonPage() {
           </div>
 
           <div>
-            <label className="text-muted block text-[11px] mb-1">Company 3 (optional)</label>
+            <label htmlFor="compare-company-3" className="text-muted block text-[11px] mb-1">Company 3 (optional)</label>
             <select
+              id="compare-company-3"
               value={companyC}
               onChange={(e) => setCompanyC(e.target.value)}
               className="w-full px-2.5 py-1.5 border border-rule rounded-sm bg-surface text-ink text-xs focus:ring-1 focus:ring-accent focus:outline-none"

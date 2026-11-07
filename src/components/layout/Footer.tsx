@@ -49,9 +49,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-8 pb-8 border-b border-rule">
           {/* Brand & Mission */}
           <div className="md:col-span-2 space-y-3">
-            <Link href="/" className="inline-block focus:outline-hidden" title="Vestly">
-              <Logo size="sm" />
-            </Link>
+            <Logo href="/" size="sm" />
             <p className="text-xs text-muted leading-relaxed max-w-sm">
               A quiet, numbers-first equity compensation calculator and scenario planning tool
               for employees holding stock options, RSUs, and ESPPs.

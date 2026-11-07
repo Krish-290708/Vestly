@@ -327,6 +327,7 @@ export default function DilutionModelerPage() {
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[11px] text-[var(--ink-muted)]">Round #{idx + 1}:</span>
                     <Input
+                      aria-label={`Round ${idx + 1} name`}
                       value={round.name}
                       onChange={(e) => handleUpdateRound(idx, 'name', e.target.value)}
                       className="w-40 font-medium"

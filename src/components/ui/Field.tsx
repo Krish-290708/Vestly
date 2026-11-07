@@ -26,6 +26,13 @@ export const Field: React.FC<FieldProps> = ({
 
   const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
 
+  // If the child is a plain wrapper element (e.g. <div> holding an input and a hint), do not put the
+  // id on the wrapper: the label would then point at a div. The page passes the same `id` to the input.
+  const isPlainWrapper =
+    React.isValidElement(children) &&
+    typeof children.type === 'string' &&
+    !['input', 'select', 'textarea'].includes(children.type);
+
   return (
     <div className={`space-y-1.5 ${className}`}>
       {label && (
@@ -43,7 +50,7 @@ export const Field: React.FC<FieldProps> = ({
       )}
 
       <div>
-        {React.isValidElement(children)
+        {React.isValidElement(children) && !isPlainWrapper
           ? React.cloneElement(children as React.ReactElement<any>, {
               id: fieldId,
               'aria-describedby': describedBy,

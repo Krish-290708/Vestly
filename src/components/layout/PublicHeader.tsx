@@ -43,9 +43,7 @@ export function PublicHeader() {
   return (
     <header className="h-14 border-b border-rule bg-paper px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 select-none">
       <div className="flex items-center gap-6 sm:gap-8">
-        <Link href="/" className="flex items-center gap-2 focus:outline-hidden" title="Vestly">
-          <Logo size="sm" />
-        </Link>
+        <Logo href="/" size="sm" />
 
         <nav className="hidden sm:flex items-center gap-4 text-xs font-sans text-muted">
           <Link href="/learn" className="hover:text-ink transition-colors">

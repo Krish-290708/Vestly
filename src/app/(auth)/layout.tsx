@@ -10,9 +10,7 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink font-sans">
       <header className="h-14 border-b border-rule bg-paper px-4 sm:px-6 flex items-center justify-between">
-        <Link href="/" title="Vestly" className="focus:outline-hidden">
-          <Logo size="sm" />
-        </Link>
+        <Logo href="/" size="sm" />
         <Link
           href="/"
           className="text-xs text-muted hover:text-ink font-medium transition-colors"

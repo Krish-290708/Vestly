@@ -226,9 +226,10 @@ export default function ExerciseStrategyPage() {
             />
           </Field>
 
-          <Field label="Exit price slider ($/sh)">
+          <Field id="exit-price-slider" label="Exit price slider ($/sh)">
             <div className="space-y-1">
               <input
+                id="exit-price-slider"
                 type="range"
                 min={Math.max(1, Math.round(strikePrice * 0.5))}
                 max={Math.round(currentFmv * 6)}

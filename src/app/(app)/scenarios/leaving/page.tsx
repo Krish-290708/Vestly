@@ -267,9 +267,10 @@ export default function DeparturePlanningPage() {
               />
             </Field>
 
-            <Field label="Post-termination exercise window (PTEW days)">
+            <Field id="ptew-days" label="Post-termination exercise window (PTEW days)">
               <div className="space-y-2">
                 <Input
+                  id="ptew-days"
                   type="number"
                   value={ptewDays}
                   onChange={(e) => setPtewDays(parseInt(e.target.value) || 0)}

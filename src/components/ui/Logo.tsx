@@ -6,6 +6,8 @@ export interface LogoProps {
   className?: string;
   showWordmark?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  /** Accessible name for the link; needed when the wordmark is hidden (collapsed sidebar). */
+  ariaLabel?: string;
 }
 
 export const Logo: React.FC<LogoProps> = ({
@@ -13,6 +15,7 @@ export const Logo: React.FC<LogoProps> = ({
   className = '',
   showWordmark = true,
   size = 'md',
+  ariaLabel = 'Vestly home',
 }) => {
   const iconSizes = {
     sm: 'w-4 h-4',
@@ -57,6 +60,7 @@ export const Logo: React.FC<LogoProps> = ({
     return (
       <Link
         href={href}
+        aria-label={ariaLabel}
         className="inline-flex items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded-sm"
       >
         {content}

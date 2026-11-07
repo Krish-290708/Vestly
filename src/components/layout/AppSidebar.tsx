@@ -111,13 +111,7 @@ export function AppSidebar({
     >
       {/* Top Branding */}
       <div className="h-14 flex items-center px-4 border-b border-rule">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2.5 overflow-hidden focus:outline-hidden"
-          title="Vestly Home"
-        >
-          <Logo size="sm" showWordmark={!collapsed} />
-        </Link>
+        <Logo href="/dashboard" size="sm" showWordmark={!collapsed} />
       </div>
 
       {/* Navigation Groups */}
