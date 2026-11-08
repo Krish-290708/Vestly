@@ -112,8 +112,8 @@ export default function LoginPage() {
                 Test with sample data
               </h2>
               <p className="text-xs text-muted leading-relaxed">
-                Includes 3 pre-seeded grants (Stripe ISOs, Databricks NSOs, Figma RSUs)
-                with realistic vesting calendars and tax parameters.
+                Includes 6 sample grants (ISOs, NSOs and RSUs across private and public
+                companies) with vesting calendars, reminders and saved scenarios. Figures are illustrative.
               </p>
             </div>
 
