@@ -198,46 +198,49 @@ export const MOCK_MARKET_INDICES = [
   }
 ];
 
+/**
+ * Illustrative sample items shown only when no live news feed is available.
+ * They are written for Vestly, are not real reporting, and name no outlet or link.
+ */
 export const MOCK_NEWS_ARTICLES = [
   {
     id: "news_1",
     category: "IPO & Markets",
-    headline: "Tech IPO Outlook Strengthens as Venture-Backed Unicorns Prepare S-1 Filings",
-    summary: "Investment banks report increased activity among late-stage software and AI companies evaluating public listings in late 2024 and 2025 as equity markets maintain resilience.",
-    source: "Financial Times",
-    url: "https://www.ft.com",
-    datetime: Date.now() - 1000 * 60 * 60 * 3, // 3 hours ago
+    headline: "Why IPO windows matter to employees holding private-company equity",
+    summary: "When public markets are open, late-stage companies are more likely to file to list, which can turn illiquid shares into sellable ones after a lock-up. Sample item for illustration.",
+    source: "Vestly sample",
+    url: "",
+    datetime: Date.now() - 1000 * 60 * 60 * 3,
     relatedTicker: "TECH"
   },
   {
     id: "news_2",
     category: "Fintech",
-    headline: "Stripe Surpasses $1 Trillion in Total Payment Volume, Expanding Embedded Finance Footprint",
-    summary: "Payments infrastructure giant Stripe achieved over $1T in processed volume in 2023, accelerating its enterprise software footprint with global multinationals.",
-    source: "Bloomberg",
-    url: "https://www.bloomberg.com",
-    datetime: Date.now() - 1000 * 60 * 60 * 8, // 8 hours ago
-    relatedTicker: "STRIP"
+    headline: "What a tender offer means for your vested shares",
+    summary: "A company-run tender lets employees sell some vested equity before an IPO. Tax depends on grant type, cost basis and holding period. Sample item for illustration.",
+    source: "Vestly sample",
+    url: "",
+    datetime: Date.now() - 1000 * 60 * 60 * 8,
+    relatedTicker: "TENDER"
   },
   {
     id: "news_3",
     category: "Artificial Intelligence",
-    headline: "Databricks Expands AI Capabilities with LakehouseIQ and Enterprise Model Serving",
-    summary: "Databricks launches new automated governance and retrieval augmented generation tooling for Fortune 500 customers operating complex enterprise data lakes.",
-    source: "TechCrunch",
-    url: "https://techcrunch.com",
-    datetime: Date.now() - 1000 * 60 * 60 * 18, // 18 hours ago
-    relatedTicker: "DATA"
+    headline: "How dilution from new funding rounds changes what your options are worth",
+    summary: "Each priced round issues new shares, shrinking your percentage ownership even when the company value rises. Sample item for illustration.",
+    source: "Vestly sample",
+    url: "",
+    datetime: Date.now() - 1000 * 60 * 60 * 18,
+    relatedTicker: "DILUTE"
   },
   {
     id: "news_4",
     category: "Tax & Regulation",
-    headline: "IRS Updates 2024 Alternative Minimum Tax Exemption Thresholds for Equity Compensation Holders",
-    summary: "The Internal Revenue Service released inflation-adjusted figures for the Alternative Minimum Tax, increasing exemptions for individual filers holding incentive stock options.",
-    source: "Wall Street Journal",
-    url: "https://www.wsj.com",
-    datetime: Date.now() - 1000 * 60 * 60 * 28, // 1 day ago
+    headline: "AMT thresholds change every year: check the current figures before exercising ISOs",
+    summary: "The exemption and phase-out amounts are adjusted for inflation annually. Look up the current IRS figures before planning an exercise. Sample item for illustration.",
+    source: "Vestly sample",
+    url: "",
+    datetime: Date.now() - 1000 * 60 * 60 * 28,
     relatedTicker: "TAX"
   }
 ];
-

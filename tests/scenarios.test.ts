@@ -204,3 +204,76 @@ describe('Unclamped Negative Net Proceeds (Bug 3 Fix)', () => {
   });
 });
 
+
+describe('Tender offer: cost basis and losses', () => {
+  const taxSettings = {
+    federalTaxRate: 0.32,
+    stateTaxRate: 0.093,
+    capitalGainsRate: 0.2,
+    stateCapitalGainsRate: 0.093,
+    ficaRate: 0.0235,
+    filingStatus: 'SINGLE' as const,
+  };
+  const base = {
+    vestedUnits: 1000,
+    tenderParticipationPct: 100,
+    tenderPricePerShare: 50,
+    strikePrice: 5,
+    transactionFeePct: 0,
+    taxSettings,
+    projectedIpoPrice: 80,
+    holdingPeriodMonths: 18,
+  };
+
+  it('RSU with a known vest price taxes only the gain above basis', () => {
+    const r = calculateTenderOffer({ ...base, grantType: 'RSU', alreadyExercised: false, costBasisPerShare: 40 });
+    expect(r.grossTenderProceeds).toBe(50000);
+    expect(r.costBasisTotal).toBe(40000);
+    expect(r.netTaxableGain).toBe(10000);
+    // long-term: 10,000 x (20% + 9.3%)
+    expect(r.estimatedTaxes.totalTax).toBe(2930);
+    expect(r.netCashPayout).toBe(50000 - 2930);
+    expect(r.costBasisProvided).toBe(true);
+    expect(r.warnings).toHaveLength(0);
+  });
+
+  it('RSU without a basis taxes the whole sale and warns', () => {
+    const r = calculateTenderOffer({ ...base, grantType: 'RSU', alreadyExercised: false });
+    expect(r.costBasisProvided).toBe(false);
+    expect(r.netTaxableGain).toBe(50000);
+    expect(r.warnings.join(' ')).toMatch(/No cost basis/);
+  });
+
+  it('shows a loss as negative, charges no tax, and warns', () => {
+    const r = calculateTenderOffer({ ...base, grantType: 'RSU', alreadyExercised: false, costBasisPerShare: 60 });
+    expect(r.netTaxableGain).toBe(-10000);
+    expect(r.isLoss).toBe(true);
+    expect(r.lossAmount).toBe(10000);
+    expect(r.estimatedTaxes.totalTax).toBe(0);
+    expect(r.netCashPayout).toBe(50000);
+    expect(r.warnings.join(' ')).toMatch(/loss/);
+  });
+
+  it('exercised NSO defaults basis to strike and uses a supplied basis when given', () => {
+    const noBasis = calculateTenderOffer({ ...base, grantType: 'NSO', alreadyExercised: true });
+    expect(noBasis.costBasisPerShare).toBe(5);
+    expect(noBasis.netTaxableGain).toBe(45000);
+    const withBasis = calculateTenderOffer({ ...base, grantType: 'NSO', alreadyExercised: true, costBasisPerShare: 30 });
+    expect(withBasis.netTaxableGain).toBe(20000);
+    expect(withBasis.estimatedTaxes.totalTax).toBeLessThan(noBasis.estimatedTaxes.totalTax);
+  });
+
+  it('unexercised options ignore costBasisPerShare and use the strike offset', () => {
+    const r = calculateTenderOffer({ ...base, grantType: 'ISO', alreadyExercised: false, costBasisPerShare: 999 });
+    expect(r.costBasisTotal).toBe(0);
+    expect(r.exerciseStrikeOffset).toBe(5000);
+    expect(r.netTaxableGain).toBe(45000);
+  });
+
+  it('fees reduce the gain and can turn a small gain into a loss', () => {
+    const r = calculateTenderOffer({ ...base, grantType: 'RSU', alreadyExercised: false, costBasisPerShare: 49.5, transactionFeePct: 2 });
+    // 50,000 - 49,500 - 1,000 fee
+    expect(r.netTaxableGain).toBe(-500);
+    expect(r.isLoss).toBe(true);
+  });
+});

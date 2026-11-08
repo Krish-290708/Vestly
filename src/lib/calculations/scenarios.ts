@@ -203,16 +203,58 @@ export function calculateTenderOffer(inputs: TenderOfferInputs): TenderOfferResu
     transactionFeePct,
     taxSettings,
     projectedIpoPrice,
+    costBasisPerShare,
   } = inputs;
 
   const unitsOffered = Math.round(vestedUnits * (Math.max(0, Math.min(100, tenderParticipationPct)) / 100));
   const retainedUnits = Math.max(0, vestedUnits - unitsOffered);
   const grossTenderProceeds = Math.round(unitsOffered * tenderPricePerShare);
 
-  const exerciseStrikeOffset = alreadyExercised || grantType === 'RSU' ? 0 : Math.round(unitsOffered * strikePrice);
+  // Shares you already own (vested RSUs, or options you already exercised) have a tax basis.
+  // Options exercised inside the tender instead pay the strike price, which acts as the offset.
+  const ownsShares = alreadyExercised || grantType === 'RSU';
+  const costBasisProvided =
+    typeof costBasisPerShare === 'number' && isFinite(costBasisPerShare) && costBasisPerShare >= 0;
+  const basisPerShareUsed = !ownsShares
+    ? 0
+    : costBasisProvided
+      ? (costBasisPerShare as number)
+      : grantType === 'RSU'
+        ? 0
+        : strikePrice;
+
+  const exerciseStrikeOffset = ownsShares ? 0 : Math.round(unitsOffered * strikePrice);
+  const costBasisTotal = ownsShares ? Math.round(unitsOffered * basisPerShareUsed) : 0;
   const transactionFeeAmount = Math.round(grossTenderProceeds * (transactionFeePct / 100));
 
-  const netTaxableGain = Math.max(0, grossTenderProceeds - exerciseStrikeOffset - transactionFeeAmount);
+  // Signed: a loss stays negative so it is visible. Tax is only charged on a positive gain.
+  const netTaxableGain = grossTenderProceeds - exerciseStrikeOffset - costBasisTotal - transactionFeeAmount;
+  const isLoss = netTaxableGain < 0;
+  const lossAmount = isLoss ? -netTaxableGain : 0;
+  const taxableGain = Math.max(0, netTaxableGain);
+
+  const warnings: string[] = [];
+  if (ownsShares && !costBasisProvided) {
+    if (grantType === 'RSU') {
+      warnings.push(
+        'No cost basis entered. RSUs are taxed as income when they vest, so the price at vest is your basis. Until you enter it, the whole sale is treated as gain, which overstates the tax.'
+      );
+    } else if (grantType === 'NSO') {
+      warnings.push(
+        'No cost basis entered, so the strike price is used. If you paid income tax when you exercised, your basis is the share price at exercise, and entering it will lower the tax estimate.'
+      );
+    }
+  }
+  if (isLoss && ownsShares) {
+    warnings.push(
+      'This sale is at a loss. A capital loss first offsets capital gains, and up to $3,000 a year can offset other income. No tax is charged here and no refund is estimated.'
+    );
+  }
+  if (isLoss && !ownsShares) {
+    warnings.push(
+      'The tender price is below your strike price after fees, so exercising to sell would cost you money. No tax is charged and no refund is estimated.'
+    );
+  }
 
   let ordinaryIncomeTax = 0;
   let stateTax = 0;
@@ -225,33 +267,33 @@ export function calculateTenderOffer(inputs: TenderOfferInputs): TenderOfferResu
     const isLongTerm = holdingPeriodMonths >= 12;
     if (isLongTerm) {
       taxCharacter = 'Long-Term Capital Gains (Held > 12 Months)';
-      capitalGainsTax = netTaxableGain * taxSettings.capitalGainsRate;
-      stateCapitalGainsTax = netTaxableGain * taxSettings.stateCapitalGainsRate;
+      capitalGainsTax = taxableGain * taxSettings.capitalGainsRate;
+      stateCapitalGainsTax = taxableGain * taxSettings.stateCapitalGainsRate;
     } else {
       taxCharacter = 'Short-Term Capital Gains (Ordinary Income Rates)';
-      ordinaryIncomeTax = netTaxableGain * taxSettings.federalTaxRate;
-      stateTax = netTaxableGain * taxSettings.stateTaxRate;
+      ordinaryIncomeTax = taxableGain * taxSettings.federalTaxRate;
+      stateTax = taxableGain * taxSettings.stateTaxRate;
     }
   } else {
     if (grantType === 'ISO') {
       taxCharacter = 'Disqualifying Disposition (Ordinary Income, No AMT)';
-      ordinaryIncomeTax = netTaxableGain * taxSettings.federalTaxRate;
-      stateTax = netTaxableGain * taxSettings.stateTaxRate;
+      ordinaryIncomeTax = taxableGain * taxSettings.federalTaxRate;
+      stateTax = taxableGain * taxSettings.stateTaxRate;
     } else if (grantType === 'NSO') {
       taxCharacter = 'Ordinary Income (W-2 Wages + FICA/Medicare)';
-      ordinaryIncomeTax = netTaxableGain * taxSettings.federalTaxRate;
-      stateTax = netTaxableGain * taxSettings.stateTaxRate;
-      ficaTax = netTaxableGain * taxSettings.ficaRate;
+      ordinaryIncomeTax = taxableGain * taxSettings.federalTaxRate;
+      stateTax = taxableGain * taxSettings.stateTaxRate;
+      ficaTax = taxableGain * taxSettings.ficaRate;
     } else if (grantType === 'RSU') {
       taxCharacter = 'Capital Gains (RSU Vested Shares)';
       const isLongTerm = holdingPeriodMonths >= 12;
       const capRate = isLongTerm ? taxSettings.capitalGainsRate : taxSettings.federalTaxRate;
-      capitalGainsTax = netTaxableGain * capRate;
-      stateCapitalGainsTax = netTaxableGain * (isLongTerm ? taxSettings.stateCapitalGainsRate : taxSettings.stateTaxRate);
+      capitalGainsTax = taxableGain * capRate;
+      stateCapitalGainsTax = taxableGain * (isLongTerm ? taxSettings.stateCapitalGainsRate : taxSettings.stateTaxRate);
     } else {
       taxCharacter = 'ESPP Disqualifying Sale';
-      ordinaryIncomeTax = netTaxableGain * taxSettings.federalTaxRate;
-      stateTax = netTaxableGain * taxSettings.stateTaxRate;
+      ordinaryIncomeTax = taxableGain * taxSettings.federalTaxRate;
+      stateTax = taxableGain * taxSettings.stateTaxRate;
     }
   }
 
@@ -267,6 +309,12 @@ export function calculateTenderOffer(inputs: TenderOfferInputs): TenderOfferResu
     exerciseStrikeOffset,
     transactionFeeAmount,
     netTaxableGain,
+    costBasisPerShare: basisPerShareUsed,
+    costBasisTotal,
+    costBasisProvided,
+    isLoss,
+    lossAmount,
+    warnings,
     estimatedTaxes: {
       ordinaryIncomeTax: Math.round(ordinaryIncomeTax),
       stateTax: Math.round(stateTax),

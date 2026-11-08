@@ -25,7 +25,7 @@ import {
   TableCell,
 } from '@/components/ui';
 import { NextSteps } from '@/components/layout/NextSteps';
-import { money, percent, compactMoney } from '@/lib/format';
+import { money, percent, compactMoney, signedMoney } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
 
 export default function TenderOfferPage() {
@@ -46,6 +46,8 @@ export default function TenderOfferPage() {
   const [transactionFeePct, setTransactionFeePct] = useState<number>(1.5);
   const [alreadyExercised, setAlreadyExercised] = useState<boolean>(false);
   const [holdingPeriodMonths, setHoldingPeriodMonths] = useState<number>(18);
+  // Empty string means "I don't know"; the calculator then says what it assumed.
+  const [costBasisInput, setCostBasisInput] = useState<string>('');
   const [projectedIpoPrice, setProjectedIpoPrice] = useState<number>(75.0);
   const [grantType, setGrantType] = useState<GrantType>('ISO');
   const [stateCode, setStateCode] = useState<string>('CA');
@@ -101,6 +103,9 @@ export default function TenderOfferPage() {
       .catch(() => {});
   }, [requestedGrantId, selectGrant]);
 
+  const ownsShares = alreadyExercised || grantType === 'RSU';
+  const costBasisPerShare = costBasisInput.trim() === '' ? undefined : Math.max(0, parseFloat(costBasisInput) || 0);
+
   const tenderResult = useMemo(
     () =>
       calculateTenderOffer({
@@ -114,6 +119,7 @@ export default function TenderOfferPage() {
         transactionFeePct,
         taxSettings,
         projectedIpoPrice,
+        costBasisPerShare,
       }),
     [
       vestedUnits,
@@ -126,6 +132,7 @@ export default function TenderOfferPage() {
       transactionFeePct,
       taxSettings,
       projectedIpoPrice,
+      costBasisPerShare,
     ]
   );
 
@@ -150,6 +157,7 @@ export default function TenderOfferPage() {
             holdingPeriodMonths,
             transactionFeePct,
             projectedIpoPrice,
+            costBasisPerShare: costBasisPerShare ?? null,
           },
         }),
       });
@@ -294,12 +302,32 @@ export default function TenderOfferPage() {
               </Select>
             </Field>
 
-            {alreadyExercised && (
-              <Field label="Holding period (months since exercise)">
+            {ownsShares && (
+              <Field label={grantType === 'RSU' ? 'Holding period (months since vest)' : 'Holding period (months since exercise)'}>
                 <Input
                   type="number"
                   value={holdingPeriodMonths}
                   onChange={(e) => setHoldingPeriodMonths(parseInt(e.target.value) || 0)}
+                />
+              </Field>
+            )}
+
+            {ownsShares && (
+              <Field
+                label="Cost basis ($/sh)"
+                hint={
+                  grantType === 'RSU'
+                    ? 'The share price on the day your RSUs vested. Leave blank if unknown.'
+                    : 'The share price when you exercised. Leave blank to use your strike price.'
+                }
+              >
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Unknown"
+                  value={costBasisInput}
+                  onChange={(e) => setCostBasisInput(e.target.value)}
                 />
               </Field>
             )}
@@ -405,6 +433,18 @@ export default function TenderOfferPage() {
                   </TableRow>
                 )}
 
+                {tenderResult.costBasisTotal > 0 && (
+                  <TableRow className="text-[var(--loss)]">
+                    <TableCell className="font-medium">Less: Cost Basis</TableCell>
+                    <TableCell className="text-right text-xs">
+                      {tenderResult.unitsOffered.toLocaleString()} × ${tenderResult.costBasisPerShare.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono font-medium">
+                      -{money(tenderResult.costBasisTotal)}
+                    </TableCell>
+                  </TableRow>
+                )}
+
                 {tenderResult.transactionFeeAmount > 0 && (
                   <TableRow className="text-[var(--loss)]">
                     <TableCell className="font-medium">Less: Transaction Fee</TableCell>
@@ -418,9 +458,11 @@ export default function TenderOfferPage() {
                 )}
 
                 <TableRow className="font-medium">
-                  <TableCell>Net Taxable Gain</TableCell>
-                  <TableCell className="text-right text-xs text-[var(--ink-muted)]">Gain basis</TableCell>
-                  <TableCell className="text-right font-mono">{money(tenderResult.netTaxableGain)}</TableCell>
+                  <TableCell>{tenderResult.isLoss ? 'Net Loss' : 'Net Taxable Gain'}</TableCell>
+                  <TableCell className="text-right text-xs text-[var(--ink-muted)]">
+                    {tenderResult.isLoss ? 'No tax charged' : 'Gain basis'}
+                  </TableCell>
+                  <TableCell className="text-right font-mono">{signedMoney(tenderResult.netTaxableGain)}</TableCell>
                 </TableRow>
 
                 <TableRow className="text-[var(--loss)]">
@@ -429,7 +471,7 @@ export default function TenderOfferPage() {
                     Federal, State &amp; Payroll
                   </TableCell>
                   <TableCell className="text-right font-mono font-medium">
-                    -{money(tenderResult.estimatedTaxes.totalTax)}
+                    {tenderResult.estimatedTaxes.totalTax > 0 ? '-' : ''}{money(tenderResult.estimatedTaxes.totalTax)}
                   </TableCell>
                 </TableRow>
 
@@ -483,6 +525,12 @@ export default function TenderOfferPage() {
               By retaining {tenderResult.retainedUnits.toLocaleString()} units, you preserve {money(tenderResult.retainedValueAtProjectedIpo - tenderResult.retainedValueAtCurrentFmv)} in potential upside if the company lists at your projected ${projectedIpoPrice.toFixed(2)} target.
             </p>
           </div>
+
+          {tenderResult.warnings.map((w) => (
+            <Callout key={w} variant="warn">
+              {w}
+            </Callout>
+          ))}
 
           {/* Compliance Disclaimer */}
           <Callout variant="note">

@@ -160,6 +160,12 @@ export interface TenderOfferInputs {
   transactionFeePct: number;
   taxSettings: TaxBracketSettings;
   projectedIpoPrice: number;
+  /**
+   * Tax basis per share for shares you already own when you tender (RSUs: the price when they
+   * vested; exercised NSOs: the price when you exercised; exercised ISOs: the strike price).
+   * Leave it out if unknown; the result then says so.
+   */
+  costBasisPerShare?: number;
 }
 
 export interface TenderOfferResult {
@@ -168,7 +174,19 @@ export interface TenderOfferResult {
   grossTenderProceeds: number;
   exerciseStrikeOffset: number;
   transactionFeeAmount: number;
+  /** Sale proceeds minus strike offset, cost basis and fees. Negative means a loss; it is never clamped to zero. */
   netTaxableGain: number;
+  /** Cost basis per share used for shares already owned (0 when exercising options in the tender). */
+  costBasisPerShare: number;
+  /** Total cost basis of the shares sold (0 when exercising options in the tender). */
+  costBasisTotal: number;
+  /** True when the caller supplied a cost basis. */
+  costBasisProvided: boolean;
+  isLoss: boolean;
+  /** Size of the loss as a positive number, or 0. No tax and no refund is estimated on a loss. */
+  lossAmount: number;
+  /** Plain-English cautions about assumptions that change the tax estimate. */
+  warnings: string[];
   estimatedTaxes: {
     ordinaryIncomeTax: number;
     stateTax: number;

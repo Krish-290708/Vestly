@@ -124,14 +124,18 @@ export default function NewsFeedPage() {
             </p>
 
             <div className="pt-2 flex items-center justify-between border-t border-rule/60 text-xs">
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-ink hover:text-accent underline underline-offset-2"
-              >
-                Read original source →
-              </a>
+              {item.url ? (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-ink hover:text-accent underline underline-offset-2"
+                >
+                  Read original source →
+                </a>
+              ) : (
+                <span className="text-muted">Illustrative sample, not a news report</span>
+              )}
 
               {item.relatedTicker && (
                 <span className="font-mono text-[10px] text-muted bg-sunk px-1.5 py-0.5 rounded-sm border border-rule">
