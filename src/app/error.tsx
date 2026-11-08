@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import Link from 'next/link';
+import { AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export default function Error({
   error,
@@ -11,40 +13,46 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('App Router caught error:', error);
+    console.error('Vestly application error caught:', error);
   }, [error]);
 
   return (
-    <div className="max-w-md mx-auto my-16 p-8 bg-white rounded-2xl border border-slate-200 shadow-card text-center space-y-5">
-      <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 mx-auto">
-        <AlertTriangle className="w-6 h-6" />
+    <div className="max-w-lg mx-auto my-12 sm:my-20 p-6 sm:p-8 bg-surface border border-loss/40 rounded-sm text-ink space-y-5">
+      <div className="flex items-center gap-2 text-loss border-b border-rule pb-3">
+        <AlertCircle className="w-4 h-4 shrink-0" />
+        <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">
+          Application error
+        </span>
       </div>
 
-      <div className="space-y-1.5">
-        <h2 className="text-lg font-bold text-slate-900">Something went wrong</h2>
-        <p className="text-xs text-slate-500 leading-relaxed">
-          {error?.message || 'An unexpected error occurred while loading this page.'}
+      <div className="space-y-2">
+        <h1 className="font-serif text-xl font-bold tracking-tight text-ink">
+          Unable to display this view
+        </h1>
+        <p className="text-xs text-muted leading-relaxed">
+          The calculation engine encountered an unexpected error while processing this request.
         </p>
+        {error?.message && (
+          <div className="p-3 rounded-2xs bg-sunk border border-rule font-mono text-[11px] text-muted break-all">
+            {error.message}
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center justify-center gap-3 pt-2">
-        <button
-          onClick={() => reset()}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-colors"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Try Again</span>
-        </button>
+      <div className="flex items-center gap-3 pt-3 border-t border-rule">
+        <Button variant="primary" size="sm" onClick={() => reset()}>
+          <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+          <span>Try again</span>
+        </Button>
 
-        <a
-          href="/"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xs border border-rule text-ink hover:bg-sunk transition-colors"
         >
-          <Home className="w-3.5 h-3.5" />
-          <span>Back to Home</span>
-        </a>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Return to overview</span>
+        </Link>
       </div>
     </div>
   );
 }
-

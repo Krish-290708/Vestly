@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const user = await getCurrentUser();
@@ -26,7 +28,7 @@ export async function POST(req: NextRequest) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { companyId } = await req.json();
+    const { companyId, note } = await req.json();
     if (!companyId) return NextResponse.json({ error: 'companyId is required' }, { status: 400 });
 
     const existing = await prisma.watchlistItem.findUnique({
@@ -51,6 +53,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.id,
         companyId,
+        note: note || null,
       },
       include: { company: true },
     });
@@ -61,3 +64,35 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { companyId, note } = await req.json();
+    if (!companyId) return NextResponse.json({ error: 'companyId is required' }, { status: 400 });
+
+    const updated = await prisma.watchlistItem.updateMany({
+      where: {
+        userId: user.id,
+        companyId,
+      },
+      data: {
+        note: typeof note === 'string' ? note.trim() : null,
+      },
+    });
+
+    if (updated.count === 0) {
+      return NextResponse.json({ error: 'Watchlist item not found' }, { status: 404 });
+    }
+
+    const item = await prisma.watchlistItem.findFirst({
+      where: { userId: user.id, companyId },
+      include: { company: true },
+    });
+
+    return NextResponse.json({ success: true, item });
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Failed to update note' }, { status: 500 });
+  }
+}

@@ -2,6 +2,10 @@
 
 import React from 'react';
 
+/**
+ * Last-resort error page. It replaces the root layout, so the app's stylesheet and design tokens
+ * are not loaded here: styling is inline and uses plain colours that work on light and dark.
+ */
 export default function GlobalError({
   error,
   reset,
@@ -10,25 +14,58 @@ export default function GlobalError({
   reset: () => void;
 }) {
   return (
-    <html>
-      <body className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans text-slate-900">
-        <div className="max-w-md w-full p-8 bg-white rounded-2xl border border-slate-200 shadow-xl text-center space-y-4">
-          <div className="w-12 h-12 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 font-bold mx-auto text-lg">
-            !
-          </div>
-          <h2 className="text-xl font-bold">System Error</h2>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            {error?.message || 'A global application error occurred.'}
+    <html lang="en">
+      <body
+        style={{
+          margin: 0,
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+          background: '#F7F4EE',
+          color: '#1A1814',
+          fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+        }}
+      >
+        <main
+          role="alert"
+          style={{
+            maxWidth: 440,
+            width: '100%',
+            padding: 24,
+            background: '#FFFFFF',
+            border: '1px solid #DDD7CB',
+            borderRadius: 4,
+          }}
+        >
+          <h1 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 600 }}>Vestly hit a problem</h1>
+          <p style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.5, color: '#5B564C' }}>
+            Your data has not been changed. Reload the page to try again.
           </p>
+          {error?.digest && (
+            <p style={{ margin: '0 0 16px', fontSize: 12, color: '#5B564C', fontFamily: 'monospace' }}>
+              Reference: {error.digest}
+            </p>
+          )}
           <button
+            type="button"
             onClick={() => reset()}
-            className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition-colors"
+            style={{
+              padding: '8px 16px',
+              fontSize: 14,
+              fontWeight: 500,
+              color: '#FFFFFF',
+              background: '#1F5A44',
+              border: 0,
+              borderRadius: 4,
+              cursor: 'pointer',
+            }}
           >
-            Reload Application
+            Reload
           </button>
-        </div>
+        </main>
       </body>
     </html>
   );
 }
-

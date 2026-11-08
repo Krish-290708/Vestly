@@ -30,25 +30,29 @@ export function generateVestingSchedule(
 
     // Month 1 to Cliff (e.g., month 12): Nothing vests until cliff
     // At cliff month (month 12), cliffFraction = cliffMonths / 48 (typically 25%) vests all at once!
-    const cliffDate = addMonths(startDate, cliffMonths);
-    const cliffUnits = Math.round(monthlyRate * cliffMonths);
-    accumulated += cliffUnits;
+    // If cliffMonths is 0, no cliff event is created and monthly vesting starts immediately at month 1.
+    if (cliffMonths > 0) {
+      const cliffDate = addMonths(startDate, cliffMonths);
+      const cliffUnits = Math.round(monthlyRate * cliffMonths);
+      accumulated += cliffUnits;
 
-    events.push({
-      vestDate: cliffDate,
-      unitsVested: cliffUnits,
-      cumulativeVested: accumulated,
-      isVested: isBefore(cliffDate, asOfDate) || isEqual(cliffDate, asOfDate),
-    });
+      events.push({
+        vestDate: cliffDate,
+        unitsVested: cliffUnits,
+        cumulativeVested: accumulated,
+        isVested: isBefore(cliffDate, asOfDate) || isEqual(cliffDate, asOfDate),
+      });
+    }
 
-    // Subsequent months after cliff up to totalMonths (e.g., months 13 to 48)
-    for (let month = cliffMonths + 1; month <= totalMonths; month++) {
+    // Subsequent months up to totalMonths (e.g., months 13 to 48 or 1 to 48 if no cliff)
+    const startMonth = cliffMonths > 0 ? cliffMonths + 1 : 1;
+    for (let month = startMonth; month <= totalMonths; month++) {
       const trancheDate = addMonths(startDate, month);
       let trancheUnits = Math.round(monthlyRate);
       
-      // On the very last month, true-up any rounding discrepancy
+      // On the very last month, true-up any rounding discrepancy without producing negative units
       if (month === totalMonths) {
-        trancheUnits = totalUnits - accumulated;
+        trancheUnits = Math.max(0, totalUnits - accumulated);
       }
       accumulated += trancheUnits;
 
