@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { MOCK_COMPANIES } from '@/lib/mockData';
+import { MOCK_COMPANIES, EXTRA_COMPANIES } from '@/lib/mockData';
+import { lookupListedCompany } from '@/lib/finnhub';
 import { getCurrentUser } from '@/lib/auth';
 import { calculateVestingProgress } from '@/lib/calculations/vesting';
 
@@ -33,7 +34,7 @@ export async function GET(
     );
 
     // 2. Search mock companies
-    const mockCompany = MOCK_COMPANIES.find(
+    const mockCompany = [...MOCK_COMPANIES, ...EXTRA_COMPANIES].find(
       (c) =>
         c.id.toLowerCase() === rawSlug ||
         slugify(c.name) === rawSlug ||
@@ -41,38 +42,38 @@ export async function GET(
         (c.ticker && c.ticker.toLowerCase() === rawSlug)
     );
 
-    if (!dbCompany && !mockCompany) {
+    // 3. Listed company found through live search (the slug is its ticker)
+    const liveOnly = !dbCompany && !mockCompany ? await lookupListedCompany(rawSlug) : null;
+
+    if (!dbCompany && !mockCompany && !liveOnly) {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
 
+    // Live quote overlay for listed companies already in the catalog or database
+    const listedTicker =
+      (dbCompany?.isPublic ?? mockCompany?.isPublic) ? (dbCompany?.ticker || mockCompany?.ticker || null) : null;
+    const live = liveOnly || (listedTicker ? await lookupListedCompany(listedTicker) : null);
+
     // Merge company metadata
-    const name = dbCompany?.name || mockCompany?.name || '';
-    const ticker = dbCompany?.ticker || mockCompany?.ticker || null;
-    const isPublic = dbCompany ? dbCompany.isPublic : mockCompany?.isPublic ?? false;
-    const sector = dbCompany?.sector || mockCompany?.sector || 'Technology';
-    const description = dbCompany?.description || mockCompany?.description || '';
-    const latestValuation = dbCompany?.latestValuation || mockCompany?.latestValuation || null;
-    const latestFmvPerShare = dbCompany?.latestFmvPerShare || mockCompany?.latestFmvPerShare || 0;
-    const lastFmvUpdateDate = dbCompany?.lastFmvUpdateDate || null;
+    const name = dbCompany?.name || mockCompany?.name || live?.name || '';
+    const ticker = dbCompany?.ticker || mockCompany?.ticker || live?.ticker || null;
+    const isPublic = dbCompany ? dbCompany.isPublic : mockCompany?.isPublic ?? !!liveOnly;
+    const sector = dbCompany?.sector || mockCompany?.sector || live?.sector || 'Not provided';
+    const description = dbCompany?.description || mockCompany?.description || live?.description || '';
+    const latestValuation = live?.marketCap || dbCompany?.latestValuation || mockCompany?.latestValuation || null;
+    const latestFmvPerShare = live?.price || dbCompany?.latestFmvPerShare || mockCompany?.latestFmvPerShare || 0;
+    const priceSource: 'live' | 'sample' | 'none' = live?.price ? 'live' : latestFmvPerShare > 0 ? 'sample' : 'none';
+    const lastFmvUpdateDate = live?.price ? new Date() : dbCompany?.lastFmvUpdateDate || null;
     const foundedYear = dbCompany?.foundedYear || mockCompany?.foundedYear || null;
     const keyLeadership = dbCompany?.keyLeadership || mockCompany?.keyLeadership || null;
     const fundingHistory = dbCompany?.fundingHistory || mockCompany?.fundingHistory || null;
     const metrics = (mockCompany as any)?.metrics || null;
-    const historicalPrices = mockCompany?.historicalPrices || [
-      { date: '2023-01', price: Math.round(latestFmvPerShare * 0.7 * 100) / 100 },
-      { date: '2023-06', price: Math.round(latestFmvPerShare * 0.8 * 100) / 100 },
-      { date: '2023-12', price: Math.round(latestFmvPerShare * 0.9 * 100) / 100 },
-      { date: '2024-06', price: latestFmvPerShare },
-    ];
+    // Only show a price history when the catalog has one. Never generate a trend from a single price.
+    const historicalPrices = mockCompany?.historicalPrices ?? [];
 
-    // Funding rounds timeline
-    const fundingRounds = [
-      { round: 'Series Seed', date: '2018-04', raisedFormatted: '$2.5M', valuationFormatted: '$12M', leadInvestor: 'Y Combinator' },
-      { round: 'Series A', date: '2019-10', raisedFormatted: '$15M', valuationFormatted: '$65M', leadInvestor: 'Sequoia Capital' },
-      { round: 'Series B', date: '2021-03', raisedFormatted: '$50M', valuationFormatted: '$350M', leadInvestor: 'Andreessen Horowitz' },
-      { round: 'Series C', date: '2022-08', raisedFormatted: '$120M', valuationFormatted: '$1.2B', leadInvestor: 'Index Ventures' },
-      { round: 'Series D / Tender', date: '2024-02', raisedFormatted: '$250M', valuationFormatted: latestValuation ? `$${(latestValuation / 1e9).toFixed(1)}B` : '$2.5B', leadInvestor: 'T. Rowe Price' },
-    ];
+    // Funding rounds are not available from any data source here, so none are shown.
+    // (An earlier version generated the same made-up rounds, with named investors, for every company.)
+    const fundingRounds: Array<{ round: string; date: string; raisedFormatted: string; valuationFormatted: string; leadInvestor: string }> = [];
 
     // Check user relationship
     const user = await getCurrentUser();
@@ -160,6 +161,8 @@ export async function GET(
         keyLeadership,
         fundingHistory,
         metrics,
+        priceSource,
+        logoUrl: live?.logoUrl || null,
         historicalPrices,
         fundingRounds,
         isWatchlisted,

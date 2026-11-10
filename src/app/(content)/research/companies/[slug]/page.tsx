@@ -17,6 +17,7 @@ interface CompanyDetailData {
     description?: string;
     latestValuation?: number;
     latestFmvPerShare: number;
+    priceSource?: 'live' | 'sample' | 'none';
     lastFmvUpdateDate?: string;
     foundedYear?: number;
     keyLeadership?: string;
@@ -286,14 +287,23 @@ export default function CompanyDetailPage({ params }: { params: { slug: string }
           <div>
             <span className="text-muted block text-[11px]">Latest valuation / cap</span>
             <span className="font-mono text-sm font-bold text-ink tabular-nums">
-              {company.latestValuation ? compactMoney(company.latestValuation) : 'Private'}
+              {company.latestValuation ? compactMoney(company.latestValuation) : company.isPublic ? '—' : 'Private'}
             </span>
           </div>
 
           <div>
-            <span className="text-muted block text-[11px]">Latest 409A / FMV</span>
+            <span className="text-muted block text-[11px]">{company.isPublic ? 'Share price' : 'Latest 409A / FMV'}</span>
             <span className="font-mono text-sm font-bold text-ink tabular-nums">
-              {money(company.latestFmvPerShare, { showCents: true })}
+              {company.latestFmvPerShare > 0 ? money(company.latestFmvPerShare, { showCents: true }) : '—'}
+            </span>
+            <span className="text-muted block text-[10px]">
+              {company.priceSource === 'live'
+                ? 'Live quote'
+                : company.priceSource === 'sample'
+                  ? 'Sample figure, not a live quote'
+                  : company.isPublic
+                    ? 'Set a market-data key for live quotes'
+                    : 'Not publicly available'}
             </span>
           </div>
 

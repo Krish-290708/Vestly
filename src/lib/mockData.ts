@@ -155,6 +155,67 @@ export const MOCK_COMPANIES = [
   }
 ];
 
+const PRIVATE_SAMPLE_NOTE = ' Status and figures are a sample snapshot and may be out of date; check current sources.';
+const PUBLIC_SAMPLE_NOTE = ' Live quotes appear when a market-data key is set.';
+
+function sampleCompany(
+  name: string,
+  ticker: string | null,
+  sector: string,
+  description: string,
+  foundedYear: number,
+  keyLeadership: string | null = null
+) {
+  return {
+    id: 'comp_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, ''),
+    name,
+    ticker,
+    isPublic: ticker !== null,
+    sector,
+    description: description + (ticker ? PUBLIC_SAMPLE_NOTE : PRIVATE_SAMPLE_NOTE),
+    foundedYear,
+    keyLeadership,
+    fundingHistory: ticker ? `Public (${ticker})` : 'Private; round details not included in sample data.',
+    latestValuation: null as number | null,
+    latestFmvPerShare: 0,
+    metrics: null as Record<string, string> | null,
+    historicalPrices: [] as Array<{ date: string; price: number }>,
+  };
+}
+
+/** Extra browsing catalog. No prices or valuations are invented: they show as unavailable until a live source fills them in. */
+export const EXTRA_COMPANIES = [
+  sampleCompany('Alphabet Inc.', 'GOOGL', 'Internet & Cloud', 'Parent of Google. Search, advertising, cloud computing and AI research.', 1998, 'Sundar Pichai (CEO)'),
+  sampleCompany('Amazon.com, Inc.', 'AMZN', 'E-commerce & Cloud', 'Online retail, logistics and cloud infrastructure through AWS.', 1994, 'Andy Jassy (CEO)'),
+  sampleCompany('Meta Platforms, Inc.', 'META', 'Social Media & AI', 'Operator of Facebook, Instagram and WhatsApp.', 2004, 'Mark Zuckerberg (CEO & Founder)'),
+  sampleCompany('Tesla, Inc.', 'TSLA', 'Automotive & Energy', 'Electric vehicles, energy storage and autonomy software.', 2003, 'Elon Musk (CEO)'),
+  sampleCompany('Netflix, Inc.', 'NFLX', 'Streaming & Media', 'Subscription streaming of films and series.', 1997, 'Ted Sarandos and Greg Peters (Co-CEOs)'),
+  sampleCompany('Salesforce, Inc.', 'CRM', 'Enterprise Software', 'Cloud customer-relationship management and enterprise applications.', 1999, 'Marc Benioff (Chair & CEO)'),
+  sampleCompany('Oracle Corporation', 'ORCL', 'Enterprise Software & Cloud', 'Databases, enterprise applications and cloud infrastructure.', 1977),
+  sampleCompany('Adobe Inc.', 'ADBE', 'Creative & Document Software', 'Creative, document and marketing software.', 1982),
+  sampleCompany('Uber Technologies, Inc.', 'UBER', 'Mobility & Delivery', 'Ride-hailing, food delivery and freight marketplaces.', 2009, 'Dara Khosrowshahi (CEO)'),
+  sampleCompany('Shopify Inc.', 'SHOP', 'E-commerce Software', 'Commerce platform for online and in-person merchants.', 2006, 'Tobi Lütke (CEO & Founder)'),
+  sampleCompany('Datadog, Inc.', 'DDOG', 'Observability & Cloud', 'Monitoring and security platform for cloud applications.', 2010, 'Olivier Pomel (CEO & Co-founder)'),
+  sampleCompany('Palantir Technologies Inc.', 'PLTR', 'Data & AI Software', 'Data analytics and AI platforms for governments and enterprises.', 2003, 'Alex Karp (CEO & Co-founder)'),
+  sampleCompany('Coinbase Global, Inc.', 'COIN', 'Crypto & Fintech', 'Cryptocurrency exchange and custody platform.', 2012, 'Brian Armstrong (CEO & Co-founder)'),
+  sampleCompany('DoorDash, Inc.', 'DASH', 'Mobility & Delivery', 'Local delivery marketplace for restaurants and retail.', 2013, 'Tony Xu (CEO & Co-founder)'),
+  sampleCompany('CrowdStrike Holdings, Inc.', 'CRWD', 'Cybersecurity', 'Cloud-native endpoint and threat-detection security platform.', 2011, 'George Kurtz (CEO & Co-founder)'),
+  sampleCompany('Cloudflare, Inc.', 'NET', 'Cybersecurity & Networking', 'Content delivery, DDoS protection and edge network services.', 2009, 'Matthew Prince (CEO & Co-founder)'),
+  sampleCompany('MongoDB, Inc.', 'MDB', 'Databases', 'Document database and cloud data platform.', 2007),
+  sampleCompany('Pinterest, Inc.', 'PINS', 'Social Media', 'Visual discovery and shopping platform.', 2010),
+  sampleCompany('Roblox Corporation', 'RBLX', 'Gaming & Platforms', 'User-generated online games and virtual-experience platform.', 2004, 'David Baszucki (CEO & Founder)'),
+  sampleCompany('Zoom Communications Inc.', 'ZM', 'Communications Software', 'Video meetings, phone and workplace collaboration.', 2011, 'Eric Yuan (CEO & Founder)'),
+  sampleCompany('OpenAI', null, 'Artificial Intelligence', 'Developer of general-purpose AI models and products.', 2015, 'Sam Altman (CEO)'),
+  sampleCompany('Anthropic', null, 'Artificial Intelligence', 'AI safety company and developer of the Claude models.', 2021, 'Dario Amodei (CEO & Co-founder)'),
+  sampleCompany('SpaceX', null, 'Aerospace', 'Launch services, satellite internet and spacecraft.', 2002, 'Elon Musk (CEO)'),
+  sampleCompany('Canva', null, 'Design Software', 'Online design and publishing platform.', 2013, 'Melanie Perkins (CEO & Co-founder)'),
+  sampleCompany('Plaid', null, 'Fintech Infrastructure', 'Connects apps to bank accounts through financial data APIs.', 2013, 'Zach Perret (CEO & Co-founder)'),
+  sampleCompany('Ramp', null, 'Fintech & Spend Management', 'Corporate cards and spend-management software.', 2019, 'Eric Glyman (CEO & Co-founder)'),
+  sampleCompany('Revolut', null, 'Fintech & Banking', 'Digital banking and money-transfer app.', 2015, 'Nik Storonsky (CEO & Founder)'),
+  sampleCompany('Epic Games', null, 'Gaming', 'Maker of Fortnite and the Unreal Engine.', 1991, 'Tim Sweeney (CEO & Founder)'),
+];
+
+
 export const MOCK_MARKET_INDICES = [
   {
     symbol: "^GSPC",

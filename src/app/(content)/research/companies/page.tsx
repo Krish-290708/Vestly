@@ -7,18 +7,20 @@ import { useToast } from '@/components/ui/Toast';
 import { money, compactMoney } from '@/lib/format';
 
 interface CompanyItem {
-  id: string;
+  id?: string;
+  slug?: string;
   name: string;
-  ticker?: string;
+  ticker?: string | null;
   isPublic: boolean;
   sector: string;
   description?: string;
-  latestValuation?: number;
+  latestValuation?: number | null;
   latestFmvPerShare: number;
-  keyLeadership?: string;
+  keyLeadership?: string | null;
   foundedYear?: number;
   isUserEmployer?: boolean;
   isWatchlisted?: boolean;
+  inDatabase?: boolean;
 }
 
 function slugify(name: string): string {
@@ -28,28 +30,41 @@ function slugify(name: string): string {
 export default function CompaniesPage() {
   const { showToast } = useToast();
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
+  const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [liveSearchActive, setLiveSearchActive] = useState(false);
   const [sectorFilter, setSectorFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState<'all' | 'private' | 'public'>('all');
   const [loading, setLoading] = useState(true);
 
-  const fetchCompanies = async (query: string = '') => {
+  // Wait for a pause in typing before searching, so each keystroke does not hit the live search.
+  useEffect(() => {
+    const t = setTimeout(() => setSearchQuery(searchInput.trim()), 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const fetchCompanies = async (query: string = '', isCancelled: () => boolean = () => false) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/market/companies?q=${encodeURIComponent(query)}`);
-      if (res.ok) {
+      if (res.ok && !isCancelled()) {
         const data = await res.json();
         setCompanies(data.companies || []);
+        setLiveSearchActive(!!data.liveSearchActive);
       }
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!isCancelled()) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCompanies(searchQuery);
+    let cancelled = false;
+    fetchCompanies(searchQuery, () => cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [searchQuery]);
 
   const handleToggleWatchlist = async (companyId: string, companyName: string) => {
@@ -100,7 +115,7 @@ export default function CompaniesPage() {
       <PageHeader
         eyebrow="Research"
         title="Companies"
-        contextSentence="Verified private venture valuations, 409A appraisals, and comparable public tech market caps."
+        contextSentence="Browse private and public companies. Figures are samples unless marked as a live quote."
         actions={
           <div className="flex items-center gap-2">
             <Link href="/research/compare">
@@ -121,8 +136,9 @@ export default function CompaniesPage() {
       <div className="flex flex-wrap items-center gap-3 text-xs">
         <input
           type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          aria-label="Search companies by name, ticker or sector"
           placeholder="Search company, ticker, or sector..."
           className="w-full sm:w-72 px-3 py-1.5 bg-surface text-ink border border-rule rounded-sm text-xs focus:ring-1 focus:ring-accent focus:outline-none placeholder:text-muted"
         />
@@ -155,6 +171,14 @@ export default function CompaniesPage() {
         </span>
       </div>
 
+      {searchQuery.length >= 2 && (
+        <p className="text-[11px] text-muted -mt-2">
+          {liveSearchActive
+            ? 'Results include live matches for other listed companies. Private companies come from the built-in sample list.'
+            : 'Searching the built-in sample list only. Set FINNHUB_API_KEY to also search other listed companies.'}
+        </p>
+      )}
+
       {/* Company Table */}
       <div className="border border-rule rounded-sm overflow-hidden bg-surface">
         {filteredCompanies.length === 0 ? (
@@ -177,9 +201,9 @@ export default function CompaniesPage() {
             </thead>
             <tbody className="divide-y divide-rule">
               {filteredCompanies.map((c) => {
-                const slug = slugify(c.name);
+                const slug = c.slug || slugify(c.name);
                 return (
-                  <tr key={c.id || c.name} className="hover:bg-sunk/30 transition-colors">
+                  <tr key={c.id || c.slug || c.name} className="hover:bg-sunk/30 transition-colors">
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <Link
@@ -210,7 +234,7 @@ export default function CompaniesPage() {
                       {c.latestValuation ? compactMoney(c.latestValuation) : '—'}
                     </td>
                     <td className="p-3 font-mono text-right tabular-nums text-ink font-semibold">
-                      {money(c.latestFmvPerShare, { showCents: true })}
+                      {c.latestFmvPerShare > 0 ? money(c.latestFmvPerShare, { showCents: true }) : '—'}
                     </td>
                     <td className="p-3 text-muted truncate max-w-[200px]">
                       {c.keyLeadership || '—'}
@@ -222,11 +246,11 @@ export default function CompaniesPage() {
                             Details
                           </Button>
                         </Link>
-                        {c.id && (
+                        {c.id && c.inDatabase && (
                           <Button
                             variant={c.isWatchlisted ? 'secondary' : 'ghost'}
                             size="sm"
-                            onClick={() => handleToggleWatchlist(c.id, c.name)}
+                            onClick={() => handleToggleWatchlist(c.id as string, c.name)}
                           >
                             {c.isWatchlisted ? 'Following' : 'Follow'}
                           </Button>

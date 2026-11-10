@@ -295,3 +295,108 @@ export async function getCompanyQuote(ticker: string) {
     };
   }
 }
+
+export interface ListedCompanyHit {
+  symbol: string;
+  name: string;
+}
+
+function titleCase(s: string): string {
+  return s
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+/**
+ * Searches Finnhub for listed companies by name or ticker. Returns [] when no key is set,
+ * on any error, or for queries shorter than 2 characters. Results are cached for a short time.
+ */
+export async function searchListedCompanies(query: string): Promise<ListedCompanyHit[]> {
+  const q = query.trim();
+  const key = process.env.FINNHUB_API_KEY;
+  if (!key || q.length < 2) return [];
+
+  const cacheKey = `search_${q.toLowerCase()}`;
+  const cached = getCached<ListedCompanyHit[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const res = await fetch(
+      `https://finnhub.io/api/v1/search?q=${encodeURIComponent(q)}&token=${key}`,
+      { signal: AbortSignal.timeout(API_TIMEOUT_MS) }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const seen = new Set<string>();
+    const hits: ListedCompanyHit[] = [];
+    for (const r of Array.isArray(data?.result) ? data.result : []) {
+      const symbol = String(r.symbol || '').toUpperCase();
+      // Common stock on a plain US ticker only (no exchange suffixes like ".L" or ".TO").
+      if (r.type !== 'Common Stock' || !/^[A-Z]{1,5}$/.test(symbol) || seen.has(symbol)) continue;
+      seen.add(symbol);
+      hits.push({ symbol, name: titleCase(String(r.description || symbol)) });
+      if (hits.length >= 12) break;
+    }
+    setCache(cacheKey, hits);
+    return hits;
+  } catch {
+    return [];
+  }
+}
+
+export interface ListedCompanyDetail {
+  ticker: string;
+  name: string;
+  sector: string;
+  description: string;
+  logoUrl: string | null;
+  marketCap: number | null;
+  price: number | null;
+  change: number | null;
+  changePercent: number | null;
+  foundedYear: number | null;
+}
+
+/**
+ * Strict live lookup for a listed company. Returns null if there is no key, the ticker is
+ * unknown (no profile), or the request fails. Never invents a price.
+ */
+export async function lookupListedCompany(ticker: string): Promise<ListedCompanyDetail | null> {
+  const t = ticker.toUpperCase().trim();
+  const key = process.env.FINNHUB_API_KEY;
+  if (!key || !/^[A-Z]{1,5}$/.test(t)) return null;
+
+  const cacheKey = `listed_${t}`;
+  const cached = getCached<ListedCompanyDetail | null>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const [quoteRes, profileRes] = await Promise.all([
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${t}&token=${key}`, { signal: AbortSignal.timeout(API_TIMEOUT_MS) }),
+      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${t}&token=${key}`, { signal: AbortSignal.timeout(API_TIMEOUT_MS) }),
+    ]);
+    if (!quoteRes.ok || !profileRes.ok) return null;
+    const quote = await quoteRes.json();
+    const profile = await profileRes.json();
+    if (!profile?.name) return null;
+
+    const detail: ListedCompanyDetail = {
+      ticker: t,
+      name: String(profile.name),
+      sector: profile.finnhubIndustry || 'Not provided',
+      description: `Listed on ${profile.exchange || 'a US exchange'}. Profile data from Finnhub.`,
+      logoUrl: profile.logo || null,
+      marketCap: profile.marketCapitalization ? profile.marketCapitalization * 1_000_000 : null,
+      price: typeof quote?.c === 'number' && quote.c > 0 ? quote.c : null,
+      change: typeof quote?.d === 'number' ? quote.d : null,
+      changePercent: typeof quote?.dp === 'number' ? quote.dp : null,
+      foundedYear: null, // Finnhub gives the IPO date, not the founding year
+    };
+    setCache(cacheKey, detail);
+    return detail;
+  } catch {
+    return null;
+  }
+}
