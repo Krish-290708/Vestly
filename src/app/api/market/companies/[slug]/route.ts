@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { MOCK_COMPANIES, EXTRA_COMPANIES } from '@/lib/mockData';
-import { lookupListedCompany } from '@/lib/finnhub';
+import { lookupListedCompany, getListedInsights } from '@/lib/finnhub';
+import { getCompanyInsight, pricedEvents, buildPrivateScorecard, buildListedScorecard } from '@/lib/companyInsights';
 import { getCurrentUser } from '@/lib/auth';
 import { calculateVestingProgress } from '@/lib/calculations/vesting';
 
@@ -56,17 +57,26 @@ export async function GET(
 
     // Merge company metadata
     const name = dbCompany?.name || mockCompany?.name || live?.name || '';
+    const earlyTicker = dbCompany?.ticker || mockCompany?.ticker || live?.ticker || null;
+    const researched = getCompanyInsight(name, earlyTicker);
     const ticker = dbCompany?.ticker || mockCompany?.ticker || live?.ticker || null;
     const isPublic = dbCompany ? dbCompany.isPublic : mockCompany?.isPublic ?? !!liveOnly;
     const sector = dbCompany?.sector || mockCompany?.sector || live?.sector || 'Not provided';
     const description = dbCompany?.description || mockCompany?.description || live?.description || '';
-    const latestValuation = live?.marketCap || dbCompany?.latestValuation || mockCompany?.latestValuation || null;
+    // For private companies, the researched, dated valuation replaces older sample figures.
+    const researchedValuation = researched && !live ? pricedEvents(researched).slice(-1)[0]?.valuationUsd ?? null : null;
+    const latestValuation =
+      live?.marketCap || researchedValuation || dbCompany?.latestValuation || mockCompany?.latestValuation || null;
     const latestFmvPerShare = live?.price || dbCompany?.latestFmvPerShare || mockCompany?.latestFmvPerShare || 0;
     const priceSource: 'live' | 'sample' | 'none' = live?.price ? 'live' : latestFmvPerShare > 0 ? 'sample' : 'none';
     const lastFmvUpdateDate = live?.price ? new Date() : dbCompany?.lastFmvUpdateDate || null;
     const foundedYear = dbCompany?.foundedYear || mockCompany?.foundedYear || null;
     const keyLeadership = dbCompany?.keyLeadership || mockCompany?.keyLeadership || null;
-    const fundingHistory = dbCompany?.fundingHistory || mockCompany?.fundingHistory || null;
+    const latestEvent = researched && !live ? pricedEvents(researched).slice(-1)[0] : null;
+    // A researched, dated event replaces older hand-written funding text for private companies.
+    const fundingHistory = latestEvent
+      ? `Latest: ${latestEvent.kind === 'funding' ? 'funding round' : latestEvent.kind === 'tender' ? 'tender offer' : 'secondary sale'} at $${((latestEvent.valuationUsd as number) / 1e9).toFixed(1).replace(/\.0$/, '')}B (${latestEvent.date})`
+      : dbCompany?.fundingHistory || mockCompany?.fundingHistory || null;
     const metrics = (mockCompany as any)?.metrics || null;
     // Only show a price history when the catalog has one. Never generate a trend from a single price.
     const historicalPrices = mockCompany?.historicalPrices ?? [];
@@ -74,6 +84,30 @@ export async function GET(
     // Funding rounds are not available from any data source here, so none are shown.
     // (An earlier version generated the same made-up rounds, with named investors, for every company.)
     const fundingRounds: Array<{ round: string; date: string; raisedFormatted: string; valuationFormatted: string; leadInvestor: string }> = [];
+
+    // Research layer: summary, ESOP-relevant history, peers and a factual scorecard (never a rating).
+    const isListed = !!live || isPublic;
+    const listedInsights = isListed && ticker ? await getListedInsights(ticker) : null;
+    const insights = {
+      summary: researched?.summary || null,
+      asOf: researched?.asOf || null,
+      ipoStatus: researched?.ipoStatus || (isListed ? 'listed' : null),
+      events: researched ? [...researched.events].sort((a, b) => b.date.localeCompare(a.date)) : [],
+      facts: researched?.facts || [],
+      esopNotes: researched?.esopNotes || [],
+      competitors: researched?.competitors || [],
+      sources: researched?.sources || [],
+      scorecard: isListed
+        ? buildListedScorecard(listedInsights?.metrics ?? null, live?.price ?? null, listedInsights?.analyst ?? null)
+        : researched
+          ? buildPrivateScorecard(researched)
+          : [],
+      peers: listedInsights?.peers || [],
+      analyst: listedInsights?.analyst || null,
+      listedMetrics: listedInsights?.metrics || null,
+      hasResearch: !!researched,
+      hasLiveInsights: !!listedInsights,
+    };
 
     // Check user relationship
     const user = await getCurrentUser();
@@ -162,6 +196,7 @@ export async function GET(
         fundingHistory,
         metrics,
         priceSource,
+        insights,
         logoUrl: live?.logoUrl || null,
         historicalPrices,
         fundingRounds,

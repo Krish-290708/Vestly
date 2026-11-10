@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PageHeader, Badge, Button, Callout, Dialog, Field } from '@/components/ui';
 import { useToast } from '@/components/ui/Toast';
 import { money, compactMoney, units } from '@/lib/format';
+import CompanyInsights, { InsightsPayload } from '@/components/research/CompanyInsights';
 
 interface CompanyDetailData {
   company: {
@@ -18,6 +19,7 @@ interface CompanyDetailData {
     latestValuation?: number;
     latestFmvPerShare: number;
     priceSource?: 'live' | 'sample' | 'none';
+    insights?: InsightsPayload;
     lastFmvUpdateDate?: string;
     foundedYear?: number;
     keyLeadership?: string;
@@ -294,10 +296,14 @@ export default function CompanyDetailPage({ params }: { params: { slug: string }
           <div>
             <span className="text-muted block text-[11px]">{company.isPublic ? 'Share price' : 'Latest 409A / FMV'}</span>
             <span className="font-mono text-sm font-bold text-ink tabular-nums">
-              {company.latestFmvPerShare > 0 ? money(company.latestFmvPerShare, { showCents: true }) : '—'}
+              {company.latestFmvPerShare > 0 && !(company.insights?.hasResearch && !company.isPublic)
+                ? money(company.latestFmvPerShare, { showCents: true })
+                : '—'}
             </span>
             <span className="text-muted block text-[10px]">
-              {company.priceSource === 'live'
+              {company.insights?.hasResearch && !company.isPublic
+                ? '409A values are set privately and not published'
+                : company.priceSource === 'live'
                 ? 'Live quote'
                 : company.priceSource === 'sample'
                   ? 'Sample figure, not a live quote'
@@ -335,12 +341,6 @@ export default function CompanyDetailPage({ params }: { params: { slug: string }
             </span>
           </div>
 
-          <div>
-            <span className="text-muted block text-[11px]">Common/Preferred spread</span>
-            <span className="font-mono tabular-nums text-ink">
-              ~30% discount
-            </span>
-          </div>
 
           <div>
             <span className="text-muted block text-[11px]">Funding summary</span>
@@ -352,6 +352,10 @@ export default function CompanyDetailPage({ params }: { params: { slug: string }
       </section>
 
       {/* Funding Rounds Timeline Table */}
+      {company.insights && (
+        <CompanyInsights insights={company.insights} companyName={company.name} isPublic={company.isPublic} />
+      )}
+
       {company.fundingRounds && company.fundingRounds.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
@@ -391,11 +395,14 @@ export default function CompanyDetailPage({ params }: { params: { slug: string }
       )}
 
       {/* Historical FMV trajectory table */}
-      {company.historicalPrices && company.historicalPrices.length > 0 && (
+      {company.historicalPrices && company.historicalPrices.length > 0 && !(company.insights?.hasResearch && !company.isPublic) && (
         <section className="space-y-3">
           <h2 className="font-serif text-sm font-semibold text-ink">
-            Historical 409A share price progression
+            {company.isPublic ? 'Sample share price history' : 'Sample 409A history'}
           </h2>
+          <p className="text-xs text-muted">
+            Illustrative figures that ship with Vestly for demonstration. They are not real quotes or appraisals.
+          </p>
 
           <div className="border border-rule rounded-sm overflow-hidden bg-surface">
             <table className="w-full text-xs text-left">

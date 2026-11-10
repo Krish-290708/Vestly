@@ -207,7 +207,7 @@ export const EXTRA_COMPANIES = [
   sampleCompany('Zoom Communications Inc.', 'ZM', 'Communications Software', 'Video meetings, phone and workplace collaboration.', 2011, 'Eric Yuan (CEO & Founder)'),
   sampleCompany('OpenAI', null, 'Artificial Intelligence', 'Developer of general-purpose AI models and products.', 2015, 'Sam Altman (CEO)'),
   sampleCompany('Anthropic', null, 'Artificial Intelligence', 'AI safety company and developer of the Claude models.', 2021, 'Dario Amodei (CEO & Co-founder)'),
-  sampleCompany('SpaceX', null, 'Aerospace', 'Launch services, satellite internet and spacecraft.', 2002, 'Elon Musk (CEO)'),
+  sampleCompany('SpaceX', 'SPCX', 'Aerospace', 'Launch services, satellite internet and spacecraft. Listed on Nasdaq in summer 2026.', 2002, 'Elon Musk (CEO)'),
   sampleCompany('Canva', null, 'Design Software', 'Online design and publishing platform.', 2013, 'Melanie Perkins (CEO & Co-founder)'),
   sampleCompany('Plaid', null, 'Fintech Infrastructure', 'Connects apps to bank accounts through financial data APIs.', 2013, 'Zach Perret (CEO & Co-founder)'),
   sampleCompany('Ramp', null, 'Fintech & Spend Management', 'Corporate cards and spend-management software.', 2019, 'Eric Glyman (CEO & Co-founder)'),

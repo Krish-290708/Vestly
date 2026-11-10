@@ -112,3 +112,63 @@ describe('GET /api/market/companies/[slug]', () => {
     expect((await call('nope')).status).toBe(404);
   });
 });
+
+describe('Company insights in the detail API', () => {
+  const call = (slug: string) => detailGET(req('http://x/'), { params: { slug } });
+  beforeEach(() => {
+    delete process.env.FINNHUB_API_KEY;
+  });
+
+  it('returns a researched profile, history and scorecard for a private company, and uses the researched valuation', async () => {
+    const { company } = await (await call('stripe')).json();
+    expect(company.insights.hasResearch).toBe(true);
+    expect(company.insights.sources.length).toBeGreaterThan(0);
+    expect(company.insights.events[0].date >= company.insights.events.slice(-1)[0].date).toBe(true); // newest first
+    expect(company.latestValuation).toBe(159_000_000_000);
+    expect(company.insights.scorecard.map((r: any) => r.indicator)).toContain('Latest priced event');
+    expect(company.fundingRounds).toEqual([]);
+    expect(company.fundingHistory).toBe('Latest: tender offer at $159B (2026-02-24)');
+  });
+
+  it('researched valuation overrides an older database figure for a private company', async () => {
+    const { company } = await (await call('notion')).json();
+    expect(company.latestValuation).toBe(11_000_000_000);
+  });
+
+  it('gives a company with no research an empty profile and no invented history or scorecard', async () => {
+    // Apple is in the mocked database and has no researched profile.
+    const { company } = await (await call('apple-inc')).json();
+    expect(company.insights.hasResearch).toBe(false);
+    expect(company.insights.summary).toBeNull();
+    expect(company.insights.events).toEqual([]);
+    expect(company.insights.esopNotes).toEqual([]);
+  });
+
+  it('shows only the liquidity row for a listed company when no market data key is set', async () => {
+    const { company } = await (await call('spacex')).json();
+    expect(company.isPublic).toBe(true);
+    expect(company.insights.hasLiveInsights).toBe(false);
+    expect(company.insights.scorecard).toHaveLength(1);
+    expect(company.insights.events.some((e: any) => e.kind === 'ipo')).toBe(true);
+  });
+
+  it('adds live peers, ratios and analyst ratings for a listed company when a key is set', async () => {
+    process.env.FINNHUB_API_KEY = 'k';
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: string) => {
+      const j = (b: any) => ({ ok: true, json: async () => b });
+      if (url.includes('stock/peers')) return j(['AAPL', 'PRA']);
+      if (url.includes('stock/recommendation')) return j([{ period: '2026-10-01', strongBuy: 5, buy: 5, hold: 5, sell: 0, strongSell: 0 }]);
+      if (url.includes('stock/metric')) return j({ metric: { peBasicExclExtraTTM: 31, '52WeekHigh': 250, '52WeekLow': 150, beta: 1.2 } });
+      if (url.includes('stock/profile2')) return j({ name: 'Peer A', marketCapitalization: 1000, finnhubIndustry: 'Tech', exchange: 'NASDAQ' });
+      if (url.includes('/quote')) return j({ c: 200, d: 1, dp: 0.5 });
+      return j({});
+    }));
+    const { company } = await (await call('apple-inc')).json();
+    expect(company.insights.hasLiveInsights).toBe(true);
+    expect(company.insights.peers[0].ticker).toBe('PRA');
+    expect(company.insights.analyst.buy).toBe(5);
+    const labels = company.insights.scorecard.map((r: any) => r.indicator).join('|');
+    expect(labels).toMatch(/52-week/);
+    expect(labels).toMatch(/third-party opinion/);
+  });
+});

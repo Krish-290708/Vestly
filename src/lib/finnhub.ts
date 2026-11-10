@@ -27,10 +27,10 @@ export const MOCK_SECTOR_ETFS: SectorQuote[] = [
   { symbol: 'XLE', name: 'Energy Select Sector SPDR', price: 88.30, change: -0.99, changePercent: -1.12 },
 ];
 
-function getCached<T>(key: string): T | null {
+function getCached<T>(key: string, ttlMs: number = DEFAULT_TTL_MS): T | null {
   const entry = memoryCache.get(key);
   if (!entry) return null;
-  if (Date.now() - entry.timestamp > DEFAULT_TTL_MS) {
+  if (Date.now() - entry.timestamp > ttlMs) {
     memoryCache.delete(key);
     return null;
   }
@@ -399,4 +399,138 @@ export async function lookupListedCompany(ticker: string): Promise<ListedCompany
   } catch {
     return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Company insights for listed companies: key ratios, peers, analyst ratings.
+// ---------------------------------------------------------------------------
+
+const INSIGHTS_TTL_MS = 30 * 60 * 1000; // peers and ratios change slowly; stay well inside free-tier limits
+
+export interface ListedKeyMetrics {
+  peTtm: number | null;
+  revenueGrowthTtmYoy: number | null;
+  netMarginTtm: number | null;
+  weekHigh52: number | null;
+  weekLow52: number | null;
+  beta: number | null;
+  marketCapUsd: number | null;
+}
+
+export interface ListedPeerRow {
+  ticker: string;
+  name: string;
+  marketCapUsd: number | null;
+  peTtm: number | null;
+  revenueGrowthTtmYoy: number | null;
+  netMarginTtm: number | null;
+}
+
+export interface ListedAnalystConsensus {
+  period: string;
+  strongBuy: number;
+  buy: number;
+  hold: number;
+  sell: number;
+  strongSell: number;
+}
+
+export interface ListedInsights {
+  metrics: ListedKeyMetrics | null;
+  peers: ListedPeerRow[];
+  analyst: ListedAnalystConsensus | null;
+}
+
+function num(v: unknown): number | null {
+  return typeof v === 'number' && isFinite(v) ? v : null;
+}
+
+function toKeyMetrics(metric: any): ListedKeyMetrics {
+  const m = metric || {};
+  return {
+    peTtm: num(m.peBasicExclExtraTTM) ?? num(m.peTTM),
+    revenueGrowthTtmYoy: num(m.revenueGrowthTTMYoy),
+    netMarginTtm: num(m.netProfitMarginTTM),
+    weekHigh52: num(m['52WeekHigh']),
+    weekLow52: num(m['52WeekLow']),
+    beta: num(m.beta),
+    marketCapUsd: num(m.marketCapitalization) !== null ? (m.marketCapitalization as number) * 1_000_000 : null,
+  };
+}
+
+async function getJson(url: string): Promise<any | null> {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(API_TIMEOUT_MS) });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Live key ratios, up to 4 peer companies and the latest analyst ratings for a listed company.
+ * Every field is null or empty when the data is missing. Nothing is estimated.
+ * Returns null without a key or for a ticker that is not a plain US symbol.
+ */
+export async function getListedInsights(ticker: string): Promise<ListedInsights | null> {
+  const t = ticker.toUpperCase().trim();
+  const key = process.env.FINNHUB_API_KEY;
+  if (!key || !/^[A-Z]{1,5}$/.test(t)) return null;
+
+  const cacheKey = `insights_${t}`;
+  const cached = getCached<ListedInsights>(cacheKey, INSIGHTS_TTL_MS);
+  if (cached) return cached;
+
+  const base = 'https://finnhub.io/api/v1';
+  const [metricData, peersData, recData] = await Promise.all([
+    getJson(`${base}/stock/metric?symbol=${t}&metric=all&token=${key}`),
+    getJson(`${base}/stock/peers?symbol=${t}&token=${key}`),
+    getJson(`${base}/stock/recommendation?symbol=${t}&token=${key}`),
+  ]);
+
+  const metrics = metricData?.metric ? toKeyMetrics(metricData.metric) : null;
+
+  const rec = Array.isArray(recData) && recData.length > 0 ? recData[0] : null;
+  const analyst: ListedAnalystConsensus | null = rec
+    ? {
+        period: String(rec.period || '').slice(0, 7),
+        strongBuy: num(rec.strongBuy) ?? 0,
+        buy: num(rec.buy) ?? 0,
+        hold: num(rec.hold) ?? 0,
+        sell: num(rec.sell) ?? 0,
+        strongSell: num(rec.strongSell) ?? 0,
+      }
+    : null;
+
+  const peerSymbols = (Array.isArray(peersData) ? peersData : [])
+    .map((p: unknown) => String(p).toUpperCase())
+    .filter((p: string) => p !== t && /^[A-Z]{1,5}$/.test(p))
+    .slice(0, 4);
+
+  const peers: ListedPeerRow[] = (
+    await Promise.all(
+      peerSymbols.map(async (sym: string): Promise<ListedPeerRow | null> => {
+        const [profile, pm] = await Promise.all([
+          getJson(`${base}/stock/profile2?symbol=${sym}&token=${key}`),
+          getJson(`${base}/stock/metric?symbol=${sym}&metric=all&token=${key}`),
+        ]);
+        if (!profile?.name) return null;
+        const k = toKeyMetrics(pm?.metric);
+        return {
+          ticker: sym,
+          name: String(profile.name),
+          marketCapUsd: num(profile.marketCapitalization) !== null ? profile.marketCapitalization * 1_000_000 : k.marketCapUsd,
+          peTtm: k.peTtm,
+          revenueGrowthTtmYoy: k.revenueGrowthTtmYoy,
+          netMarginTtm: k.netMarginTtm,
+        };
+      })
+    )
+  ).filter((r): r is ListedPeerRow => r !== null);
+
+  if (!metrics && !analyst && peers.length === 0) return null;
+  const result: ListedInsights = { metrics, peers, analyst };
+  setCache(cacheKey, result);
+  return result;
 }
